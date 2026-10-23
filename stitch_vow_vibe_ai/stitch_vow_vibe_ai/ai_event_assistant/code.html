@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"/><meta content="mobile_tab" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{width:100vw;margin:0;padding:0;}body{overscroll-behavior:none;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: 'class', theme: { extend: { colors: { 'on-error': '#ffffff', 'on-tertiary-container': '#c07d8c', 'surface-container': '#f3ede8', 'on-secondary-container': '#795e2e', 'on-tertiary-fixed-variant': '#6c3643', 'primary-fixed-dim': '#dabde1', 'error-container': '#ffdad6', 'primary-fixed': '#f7d9fe', 'on-tertiary': '#ffffff', 'on-surface': '#1d1b19', 'inverse-on-surface': '#f6f0eb', 'inverse-primary': '#dabde1', 'surface-container-low': '#f8f3ee', 'secondary-fixed': '#ffdea9', 'tertiary': '#2e0512', 'tertiary-container': '#481926', 'on-secondary': '#ffffff', 'surface': '#fef8f3', 'surface-tint': '#6e5675', 'on-secondary-fixed': '#271900', 'surface-bright': '#fef8f3', 'secondary': '#745a2a', 'surface-dim': '#ded9d4', 'on-primary': '#ffffff', 'on-primary-container': '#a187a9', 'on-background': '#1d1b19', 'secondary-container': '#ffdb9f', 'primary': '#1f0c27', 'tertiary-fixed-dim': '#fdb2c2', 'inverse-surface': '#32302d', 'on-secondary-fixed-variant': '#5a4315', 'surface-container-lowest': '#ffffff', 'primary-container': '#35213d', 'error': '#ba1a1a', 'secondary-fixed-dim': '#e4c288', 'on-surface-variant': '#4b454c', 'on-primary-fixed-variant': '#553f5d', 'surface-variant': '#e7e1dd', 'surface-container-high': '#ede7e2', 'background': '#fef8f3', 'on-primary-fixed': '#27142f', 'surface-container-highest': '#e7e1dd', 'tertiary-fixed': '#ffd9df', 'outline-variant': '#cdc4cc', 'on-tertiary-fixed': '#370b19', 'outline': '#7d757c', 'on-error-container': '#93000a' }, borderRadius: { 'DEFAULT': '0.125rem', 'lg': '0.25rem', 'xl': '0.5rem', 'full': '0.75rem' }, spacing: { 'gutter-sm': '1rem', 'margin-sm': '1rem', 'space-xl': '2.5rem', 'gutter': '1.5rem', 'gutter-lg': '2rem', 'space-lg': '1.5rem', 'space-sm': '0.5rem', 'margin-lg': '3rem', 'space-xs': '0.25rem', 'margin': '2rem', 'space-md': '1rem' }, fontFamily: { 'body-md': ['Plus Jakarta Sans'], 'headline-lg': ['Playfair Display'], 'label-lg': ['Plus Jakarta Sans'], 'headline-lg-mobile': ['Playfair Display'], 'headline-md': ['Playfair Display'], 'body-lg': ['Plus Jakarta Sans'], 'label-md': ['Plus Jakarta Sans'], 'display-lg-mobile': ['Playfair Display'], 'label-sm': ['Plus Jakarta Sans'], 'display-lg': ['Playfair Display'], 'body-sm': ['Plus Jakarta Sans'], 'title-lg': ['Plus Jakarta Sans'], 'headline-sm': ['Playfair Display'], 'title-md': ['Plus Jakarta Sans'] }, fontSize: { 'body-md': ['14px', { lineHeight: '22px', fontWeight: '400' }], 'headline-lg': ['40px', { lineHeight: '48px', letterSpacing: '-0.015em', fontWeight: '600' }], 'label-lg': ['14px', { lineHeight: '20px', letterSpacing: '0.01em', fontWeight: '600' }], 'headline-lg-mobile': ['30px', { lineHeight: '36px', letterSpacing: '-0.01em', fontWeight: '600' }], 'headline-md': ['28px', { lineHeight: '36px', fontWeight: '500' }], 'body-lg': ['16px', { lineHeight: '26px', fontWeight: '400' }], 'label-md': ['12px', { lineHeight: '16px', letterSpacing: '0.02em', fontWeight: '500' }], 'display-lg-mobile': ['38px', { lineHeight: '44px', letterSpacing: '-0.02em', fontWeight: '600' }], 'label-sm': ['11px', { lineHeight: '14px', letterSpacing: '0.04em', fontWeight: '600' }], 'display-lg': ['56px', { lineHeight: '64px', letterSpacing: '-0.02em', fontWeight: '600' }], 'body-sm': ['12px', { lineHeight: '18px', fontWeight: '400' }], 'title-lg': ['18px', { lineHeight: '26px', fontWeight: '600' }], 'headline-sm': ['22px', { lineHeight: '30px', fontWeight: '500' }], 'title-md': ['16px', { lineHeight: '24px', fontWeight: '600' }] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased flex flex-col min-h-screen"><header class="fixed top-0 w-full z-50 bg-surface/85 backdrop-blur-xl pt-safe shadow-[0_1px_8px_rgba(51,33,61,0.04)]"><div class="h-16 px-gutter-sm flex items-center justify-between gap-space-sm"><div class="flex items-center gap-space-sm min-w-0"><img alt="Vow &amp; Vibe AI Logo" class="h-8 w-auto object-contain shrink-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCigAqGPZvBBqqPQygO2-iTbFSP0BH5Rlw74P0KIunPLXMHV2jB3K3AM8ei2UUMBN8eo-mp-2ktFqw3l54njiNJslnQaQWabFdMzV1L3wxwSQA7eMgEUDCGIOZAjS-odUGzgl4Uk52Cx3gVbaJZEUeakY7HV86Lu3SaMRZZ98xlElGdeGTT4YFDQsNXX4LVKzKOmd1aM9Rk1-DTv0nFOkdkgMqwJkXIk7vHZwO6VsaUQPIvaBBgw4iHrg"/><div class="flex flex-col min-w-0"><span class="font-headline-sm text-headline-sm text-primary-container truncate leading-none">Vow &amp; Vibe</span><div class="flex items-center gap-1 mt-0.5"><button class="inline-flex items-center gap-1 bg-surface-container px-2 py-0.5 rounded-full text-secondary hover:bg-secondary-container/40 transition-colors"><span class="font-label-sm text-label-sm tracking-wide truncate max-w-[128px]">Bengali Wedding • Kolkata</span><span class="material-symbols-outlined text-[13px] shrink-0">expand_more</span></button></div></div></div><div class="flex items-center gap-space-xs shrink-0"><button aria-label="Notifications" class="w-11 h-11 flex items-center justify-center rounded-full text-on-surface-variant hover:text-primary-container hover:bg-surface-container-high transition-colors relative"><span class="material-symbols-outlined text-[22px]">notifications</span><span class="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-secondary ring-2 ring-surface"></span></button><div class="w-11 h-11 flex items-center justify-center shrink-0"><img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-secondary/40" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAoNDZx_LmrBtI8JZ9pNZRlbR-EeNhr-2so44KjaeF4K0Fbsxix8OxzGBXbaHzkIJaUiL7Yk5kELHFmNqX9xhW_VIe0zn8MjgCBlj-4oCpDEPSxULNl9yadfNv73jW8eBZEGuXOYiNKFp1fGHPbRQEc9huolqfNdztrXkvVzeqTFQeBHaPSPeLhHFdnFMj4xGLQJFwNqCkjhf_3SyBIiaF6JCO__g62lTg4ZZuDZOJlI8rBirhtwfG8KA"/></div></div></div></header><main class="flex-1 flex flex-col relative w-full pt-16 pb-20 bg-surface"><div class="flex flex-col w-full">
+<!-- Sticky Context Intelligence Header Pill -->
+<div class="px-gutter-sm pt-space-xs pb-space-xs sticky top-0 z-30 bg-surface/90 backdrop-blur-md">
+<div class="bg-surface-container-high rounded-full px-3 py-1.5 flex items-center justify-between gap-space-xs shadow-sm">
+<div class="flex items-center gap-1.5 min-w-0">
+<span class="material-symbols-outlined text-secondary text-[16px] shrink-0" style="font-variation-settings: 'FILL' 1;">arrow_back_ios_new</span>
+<div class="flex items-center gap-1 min-w-0">
+<span class="font-label-sm text-label-sm text-primary-container font-semibold truncate">AI Co-Planner</span>
+<span class="text-on-surface-variant/50 text-[10px]">•</span>
+<span class="font-label-sm text-label-sm text-on-surface-variant truncate">Bengali Wedding (₹8.0L • 300 Guests)</span>
+</div>
+</div>
+<button class="shrink-0 bg-surface-container-lowest hover:bg-secondary-container/40 text-primary-container px-2 py-0.5 rounded-full flex items-center gap-0.5 shadow-sm transition-colors" id="viewContextBtn">
+<span class="font-label-sm text-label-sm font-semibold">Active</span>
+<span class="material-symbols-outlined text-[13px] text-secondary">tune</span>
+</button>
+</div>
+</div>
+<!-- Chat Workspace Content -->
+<div class="flex flex-col px-gutter-sm space-y-space-md pt-space-sm pb-space-lg">
+<!-- Timestamp Divider -->
+<div class="flex items-center justify-center my-1">
+<span class="px-2.5 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-label-sm text-label-sm">Today, 2:42 PM</span>
+</div>
+<!-- User Message Bubble -->
+<div class="flex justify-end items-end gap-2 pl-8">
+<div class="bg-primary-container text-surface-container-lowest p-space-md rounded-2xl rounded-tr-xs shadow-sm max-w-[88%] space-y-1">
+<p class="font-body-md text-body-md leading-relaxed">
+          Can you help me optimize my decoration budget to save around ₹25,000 without losing the traditional Bengali wedding aesthetic?
+        </p>
+<div class="flex justify-end items-center gap-1 pt-1 opacity-70">
+<span class="font-label-sm text-[10px] leading-none">2:42 PM</span>
+<span class="material-symbols-outlined text-[12px]">done_all</span>
+</div>
+</div>
+</div>
+<!-- AI Assistant Response Stream -->
+<div class="flex items-start gap-2.5 pr-2">
+<!-- AI Avatar with celebratory ring -->
+<div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center shrink-0 shadow-sm mt-1">
+<span class="material-symbols-outlined text-secondary text-[18px]" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+</div>
+<!-- Main Assistant Message Card -->
+<div class="flex flex-col gap-space-sm w-full min-w-0">
+<div class="bg-surface-container-lowest p-space-md rounded-2xl rounded-tl-xs shadow-sm space-y-space-md">
+<!-- Intro statement -->
+<div class="space-y-1">
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="font-label-sm text-label-sm font-semibold uppercase tracking-wider">Kolkata Wedding Blueprint</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface leading-relaxed">
+              Here is a tailored optimization plan for your wedding in Kolkata:
+            </p>
+</div>
+<!-- Optimization Item 1: Botanical Swap -->
+<div class="bg-surface-container-low p-space-sm rounded-xl space-y-2">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm flex items-center justify-center font-bold">1</span>
+<span class="font-title-md text-title-md text-primary-container">Seasonal Botanical Swap</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-secondary font-semibold whitespace-nowrap">Save ~₹14,000</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              Replace imported orchids on the guest table centerpieces with fresh local Rajnigandha (Tuberose) and deep red Marigold garlands. It elevates the authentic cultural ambiance while significantly cutting procurement costs.
+            </p>
+<!-- Visual Mood Reference Card -->
+<div class="rounded-lg overflow-hidden bg-surface-container mt-1">
+<div class="flex items-center gap-2 p-2">
+<img class="w-14 h-14 rounded-md object-cover shrink-0 shadow-xs" data-alt="Traditional Bengali wedding floral decor arrangement with fresh white rajnigandha tuberose strings and fragrant orange marigolds in warm golden lighting, wedding banquet setting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_zxLlH5M-mcGwD5jLH-wMYjXQEK6qyUg4xYvS1OxVJAAhWamUhRNRip8q0sjrRe2IfClfTcPu1rPTEwP1WRK_PNMfIltN1suyC4RmaRavl7cv0MA6QmCdjwz9KSNa5RWfVbVwVJSuTtDO0j_FxT7hd2qji8Z_q4MjL38bCjKTF-HQmwbBzIIOCZk8mWnYi3519oFUqGqGKLCEN1glAKAJOfbHUOoCpXC-3sd8OSXx2GNee9awzH70hA"/>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface truncate">Floral Palette Shift</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Locally sourced Phool Patti Mandi vendors in Howrah</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Optimization Item 2: Entrance & Mandap Consolidation -->
+<div class="bg-surface-container-low p-space-sm rounded-xl space-y-2">
+<div class="flex items-start justify-between gap-2">
+<div class="flex items-center gap-1.5">
+<span class="w-5 h-5 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-label-sm flex items-center justify-center font-bold">2</span>
+<span class="font-title-md text-title-md text-primary-container">Entrance &amp; Mandap Consolidation</span>
+</div>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-surface-container-high text-secondary font-semibold whitespace-nowrap">Save ~₹12,000</span>
+</div>
+<p class="font-body-sm text-body-sm text-on-surface-variant leading-relaxed">
+              Utilize modular brass urli bowls with floating lotus flowers and diyas for both the reception entryway and the evening Gaye Holud zone.
+            </p>
+<div class="rounded-lg overflow-hidden bg-surface-container mt-1">
+<div class="flex items-center gap-2 p-2">
+<img class="w-14 h-14 rounded-md object-cover shrink-0 shadow-xs" data-alt="Antique Indian brass urli bowl filled with water, floating pink lotus blossoms and gentle glowing oil diyas for ceremonial Bengali wedding entrance decor" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBI9fQD4KMS28wDvtOVUuQIQMSKaEVK3Kr4w37vOGXH_6sUqviq2KKAewFZBU6udsQhB56qYExDIv42gwhFANmF2r6S0XpqBcUymN8WGrgA8LQgZVwnSQfkUohXwDNWrsEIOY9r7Evi71kf2Fhh1QqGjX402zv1qibNceAfJZ75-Mpm8uMnw0Y_7eJ41r_VJTPljPIngH8VQhsWKaOGfEXbl8bWcjzes2d9S2_HMyg0Y8lVlqvCp4xQvw"/>
+<div class="flex flex-col min-w-0">
+<span class="font-label-sm text-label-sm font-semibold text-on-surface truncate">Dual-Ritual Modular Setup</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant line-clamp-2">Repurposed 4 hours post-Haldi ceremony</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Budget Impact Summary Visual Box -->
+<div class="bg-surface-container rounded-xl p-space-md space-y-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-title-md text-title-md text-primary-container flex items-center gap-1.5">
+<span class="material-symbols-outlined text-secondary text-[18px]">account_balance_wallet</span>
+                Budget Impact Summary
+              </span>
+<span class="font-label-sm text-label-sm px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">+₹26,000</span>
+</div>
+<!-- Mini Progress / Allocation Comparison -->
+<div class="space-y-1.5 pt-1">
+<div class="flex justify-between font-body-sm text-body-sm text-on-surface-variant">
+<span>Current Decor Allocation</span>
+<span class="font-semibold text-on-surface">₹1,00,000</span>
+</div>
+<div class="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden flex">
+<div class="bg-primary-container h-full rounded-full" style="width: 74%;"></div>
+<div class="bg-secondary-fixed h-full rounded-full" style="width: 26%;"></div>
+</div>
+<div class="flex justify-between font-body-sm text-body-sm text-on-surface-variant pt-0.5">
+<span>Proposed Optimized Budget</span>
+<span class="font-semibold text-primary">₹74,000</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest p-2.5 rounded-lg flex items-center justify-between gap-2 shadow-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[20px]">verified</span>
+<div class="flex flex-col">
+<span class="font-label-sm text-label-sm text-on-surface font-semibold">Total Savings: ₹26,000</span>
+<span class="font-body-sm text-[11px] text-on-surface-variant">Increases your contingency buffer to ₹81,000</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Action Card -->
+<div class="pt-1 space-y-2">
+<span class="font-label-sm text-label-sm text-on-surface-variant font-medium">Recommended Workflow Actions</span>
+<div class="flex flex-col sm:flex-row gap-2">
+<button class="w-full bg-primary-container hover:bg-primary text-surface-container-lowest font-label-lg text-label-lg py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm transition-all active:scale-[0.98]" id="triggerApplyModal">
+<span class="material-symbols-outlined text-[18px] text-secondary-container">tune</span>
+<span>Apply Changes to Budget</span>
+</button>
+<button class="w-full bg-surface-container-high hover:bg-surface-variant text-primary-container font-label-lg text-label-lg py-2.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-colors" id="updateFloristBtn">
+<span class="material-symbols-outlined text-[18px]">checklist</span>
+<span>Update Florist Task List</span>
+</button>
+</div>
+</div>
+<!-- Footnote & Timestamp -->
+<div class="flex items-center justify-between pt-1 opacity-70">
+<span class="font-label-sm text-[10px] text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[12px]">auto_awesome</span>
+              Powered by Vow &amp; Vibe Intelligence
+            </span>
+<span class="font-label-sm text-[10px] text-on-surface-variant">2:43 PM</span>
+</div>
+</div>
+<!-- Feedback micro-action bar -->
+<div class="flex items-center gap-2 px-1">
+<button class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary-container transition-colors" title="Helpful">
+<span class="material-symbols-outlined text-[14px]">thumb_up</span>
+</button>
+<button class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary-container transition-colors" title="Refine response">
+<span class="material-symbols-outlined text-[14px]">thumb_down</span>
+</button>
+<button class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary-container transition-colors" title="Copy suggestions">
+<span class="material-symbols-outlined text-[14px]">content_copy</span>
+</button>
+<button class="w-7 h-7 rounded-full bg-surface-container flex items-center justify-center text-on-surface-variant hover:text-primary-container transition-colors" title="Share with Partner">
+<span class="material-symbols-outlined text-[14px]">ios_share</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Quick Prompt Suggestions Carousel / Chips -->
+<div class="pt-space-xs space-y-1.5">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px] text-secondary">tips_and_updates</span>
+          Suggested Next Queries
+        </span>
+</div>
+<div class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+<button class="prompt-chip shrink-0 bg-surface-container-low hover:bg-surface-container-high text-primary-container px-3 py-1.5 rounded-full font-label-sm text-label-sm shadow-xs transition-colors flex items-center gap-1">
+<span>Help me save ₹30,000</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">savings</span>
+</button>
+<button class="prompt-chip shrink-0 bg-surface-container-low hover:bg-surface-container-high text-primary-container px-3 py-1.5 rounded-full font-label-sm text-label-sm shadow-xs transition-colors flex items-center gap-1">
+<span>What should I finish this week?</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">assignment_turned_in</span>
+</button>
+<button class="prompt-chip shrink-0 bg-surface-container-low hover:bg-surface-container-high text-primary-container px-3 py-1.5 rounded-full font-label-sm text-label-sm shadow-xs transition-colors flex items-center gap-1">
+<span>Simulate 350 guests impact</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">groups</span>
+</button>
+<button class="prompt-chip shrink-0 bg-surface-container-low hover:bg-surface-container-high text-primary-container px-3 py-1.5 rounded-full font-label-sm text-label-sm shadow-xs transition-colors flex items-center gap-1">
+<span>Create final-week checklist</span>
+<span class="material-symbols-outlined text-[14px] text-secondary">checklist_rtl</span>
+</button>
+</div>
+</div>
+<!-- Chat Input Console Container -->
+<div class="bg-surface-container-lowest rounded-2xl p-2.5 shadow-md space-y-2 mt-2">
+<div class="flex items-center gap-2">
+<input class="flex-1 bg-transparent border-0 outline-none font-body-md text-body-md text-on-surface placeholder:text-on-surface-variant/60 px-2 py-1" id="chatInput" placeholder="Ask your AI planner anything about your event..." type="text"/>
+<div class="flex items-center gap-1 shrink-0">
+<button class="w-9 h-9 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors" id="voiceBtn" title="Voice Input">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<button class="w-9 h-9 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant transition-colors" id="attachBtn" title="Attach Vendor Quotation / Image">
+<span class="material-symbols-outlined text-[20px]">attach_file</span>
+</button>
+<button class="w-9 h-9 rounded-xl bg-primary-container hover:bg-primary text-surface-container-lowest flex items-center justify-center shadow-sm transition-transform active:scale-95" id="sendBtn" title="Send Query">
+<span class="material-symbols-outlined text-[18px]">send</span>
+</button>
+</div>
+</div>
+<!-- Assistant Simulation Notice -->
+<div class="flex items-center justify-between px-2 pt-0.5">
+<span class="font-body-sm text-[11px] text-on-surface-variant/70 leading-none">
+          AI recommendations are simulated demonstration insights.
+        </span>
+<span class="font-label-sm text-[11px] text-secondary flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px]">security</span>
+          Budget Locked
+        </span>
+</div>
+</div>
+</div>
+<!-- Interactive Confirmation Modal Backdrop (Hidden by Default) -->
+<div class="fixed inset-0 z-50 bg-primary-container/40 backdrop-blur-sm flex items-center justify-center p-gutter-sm hidden opacity-0 transition-opacity duration-200" id="confirmModal">
+<div class="bg-surface-container-lowest w-full max-w-sm rounded-2xl p-space-lg shadow-xl space-y-space-md">
+<div class="flex items-start justify-between">
+<div class="w-10 h-10 rounded-full bg-secondary-container flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-[22px]">auto_fix_high</span>
+</div>
+<button class="w-8 h-8 rounded-full hover:bg-surface-container flex items-center justify-center text-on-surface-variant" id="closeModalBtn">
+<span class="material-symbols-outlined text-[20px]">close</span>
+</button>
+</div>
+<div class="space-y-1">
+<h3 class="font-headline-sm text-headline-sm text-primary-container">Update Budget Sheet?</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+          This will recalculate your decoration allocation from <strong class="text-on-surface">₹1,00,000</strong> to <strong class="text-secondary">₹74,000</strong> and move ₹26,000 into contingency.
+        </p>
+</div>
+<div class="bg-surface-container-low p-space-sm rounded-xl space-y-1.5">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Florist Item Adjustment:</span>
+<span class="text-on-surface font-semibold">Rajnigandha &amp; Marigold</span>
+</div>
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface-variant">Contingency Reserve:</span>
+<span class="text-secondary font-bold">₹55,000 → ₹81,000</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm pt-2">
+<button class="w-1/2 bg-surface-container-high hover:bg-surface-variant text-primary-container font-label-lg text-label-lg py-2.5 rounded-xl transition-colors" id="cancelModalBtn">
+          Cancel
+        </button>
+<button class="w-1/2 bg-primary-container hover:bg-primary text-surface-container-lowest font-label-lg text-label-lg py-2.5 rounded-xl shadow-sm transition-transform active:scale-95 flex items-center justify-center gap-1" id="confirmApplyBtn">
+<span class="material-symbols-outlined text-[16px]">check</span>
+          Confirm
+        </button>
+</div>
+</div>
+</div>
+<!-- Toast Notification -->
+<div class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-primary-container text-surface-container-lowest px-4 py-2.5 rounded-full shadow-lg flex items-center gap-2 z-50 transform translate-y-8 opacity-0 pointer-events-none transition-all duration-200" id="toastNotification">
+<span class="material-symbols-outlined text-secondary-container text-[18px]">check_circle</span>
+<span class="font-label-sm text-label-sm" id="toastMsg">Budget updated successfully!</span>
+</div>
+</div>
+<script>
+  (function initAIChatWorkspace() {
+    const modal = document.getElementById('confirmModal');
+    const openBtn = document.getElementById('triggerApplyModal');
+    const closeBtn = document.getElementById('closeModalBtn');
+    const cancelBtn = document.getElementById('cancelModalBtn');
+    const confirmBtn = document.getElementById('confirmApplyBtn');
+    const floristBtn = document.getElementById('updateFloristBtn');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const chips = document.querySelectorAll('.prompt-chip');
+    const toast = document.getElementById('toastNotification');
+    const toastMsg = document.getElementById('toastMsg');
+
+    function showToast(message) {
+      if (!toast) return;
+      toastMsg.textContent = message;
+      toast.classList.remove('opacity-0', 'translate-y-8', 'pointer-events-none');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-8', 'pointer-events-none');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+      }, 2600);
+    }
+
+    function toggleModal(open) {
+      if (!modal) return;
+      if (open) {
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+      } else {
+        modal.classList.add('opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 200);
+      }
+    }
+
+    if (openBtn) openBtn.addEventListener('click', () => toggleModal(true));
+    if (closeBtn) closeBtn.addEventListener('click', () => toggleModal(false));
+    if (cancelBtn) cancelBtn.addEventListener('click', () => toggleModal(false));
+
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', () => {
+        toggleModal(false);
+        showToast('₹26,000 savings applied to Kolkata Budget!');
+        if (openBtn) {
+          openBtn.innerHTML = '<span class="material-symbols-outlined text-[18px] text-secondary">check</span> Applied to Budget';
+          openBtn.classList.replace('bg-primary-container', 'bg-surface-container-high');
+          openBtn.classList.replace('text-surface-container-lowest', 'text-on-surface-variant');
+        }
+      });
+    }
+
+    if (floristBtn) {
+      floristBtn.addEventListener('click', () => {
+        showToast('Florist task list synced with Rajnigandha order.');
+        floristBtn.innerHTML = '<span class="material-symbols-outlined text-[18px]">done</span> Florist Tasks Queued';
+      });
+    }
+
+    chips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        const queryText = chip.querySelector('span:first-child')?.textContent || '';
+        if (chatInput) {
+          chatInput.value = queryText;
+          chatInput.focus();
+        }
+      });
+    });
+
+    if (sendBtn && chatInput) {
+      sendBtn.addEventListener('click', () => {
+        if (!chatInput.value.trim()) return;
+        const msg = chatInput.value;
+        chatInput.value = '';
+        showToast(`Processing: "${msg.slice(0, 24)}..."`);
+      });
+
+      chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          sendBtn.click();
+        }
+      });
+    }
+  })();
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe bg-surface/90 backdrop-blur-xl shadow-[0_-4px_20px_rgba(51,33,61,0.06)]" data-active-classes="text-primary-container font-semibold"><div class="flex justify-around items-center h-16 px-space-xs"><a class="flex flex-col items-center justify-center min-w-[54px] h-12 gap-0.5 text-on-surface-variant hover:text-primary-container transition-colors" data-path="overview" href="#"><span class="material-symbols-outlined text-[22px]">dashboard</span><span class="font-label-sm text-label-sm">Overview</span></a><a class="flex flex-col items-center justify-center min-w-[54px] h-12 gap-0.5 text-on-surface-variant hover:text-primary-container transition-colors" data-path="budget" href="#"><span class="material-symbols-outlined text-[22px]">payments</span><span class="font-label-sm text-label-sm">Budget</span></a><a class="flex flex-col items-center justify-center min-w-[54px] h-12 gap-0.5 text-on-surface-variant hover:text-primary-container transition-colors" data-path="timeline" href="#"><span class="material-symbols-outlined text-[22px]">calendar_month</span><span class="font-label-sm text-label-sm">Timeline</span></a><a class="flex flex-col items-center justify-center min-w-[54px] h-12 gap-0.5 text-on-surface-variant hover:text-primary-container transition-colors" data-path="vendors" href="#"><span class="material-symbols-outlined text-[22px]">storefront</span><span class="font-label-sm text-label-sm">Vendors</span></a><a aria-current="page" class="flex flex-col items-center justify-center min-w-[54px] h-12 gap-0.5 transition-colors relative text-primary-container font-semibold" data-path="ai-assistant" href="#"><span class="material-symbols-outlined text-[22px]">auto_awesome</span><span class="font-label-sm text-label-sm">AI Concierge</span></a></div></nav></body></html>
