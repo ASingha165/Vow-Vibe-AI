@@ -19,6 +19,7 @@ import { EventPlan } from "@/types/event";
 import { formatINR, formatDate, getDaysRemaining } from "@/lib/utils";
 import { recalculateBudgetSummary } from "@/services/budgetEngine";
 import { calculateTaskMetrics } from "@/services/timelineEngine";
+import { useMidnightRefresh } from "@/hooks/useMidnightRefresh";
 
 interface OverviewTabProps {
   event: EventPlan;
@@ -33,8 +34,9 @@ export function OverviewTab({ event, onNavigateTab }: OverviewTabProps) {
     event.budget.expenses
   );
 
+  const todayStr = useMidnightRefresh();
   const taskMetrics = calculateTaskMetrics(event.timeline.tasks);
-  const countdown = getDaysRemaining(event.eventDate);
+  const countdown = getDaysRemaining(event.eventDate, todayStr);
 
   const upcomingTasks = event.timeline.tasks
     .filter((t) => t.status !== "completed")
@@ -52,9 +54,19 @@ export function OverviewTab({ event, onNavigateTab }: OverviewTabProps) {
 
         <div className="relative z-10 flex flex-col space-y-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-lowest/15 backdrop-blur-md text-secondary-fixed text-xs font-semibold uppercase tracking-wider">
+            <span
+              id="overview-countdown-status"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-lowest/15 backdrop-blur-md text-secondary-fixed text-xs font-semibold uppercase tracking-wider"
+            >
               <span className="material-symbols-outlined text-xs text-secondary-fixed">stars</span>
-              <span>Active Execution • {countdown.isPast ? "Celebrated" : `${countdown.days} Days to Go`}</span>
+              <span>
+                Active Execution •{" "}
+                {countdown.isPast
+                  ? "Event completed"
+                  : countdown.isToday
+                  ? "Today"
+                  : `${countdown.days} ${countdown.days === 1 ? "day" : "days"} to go`}
+              </span>
             </span>
             <span className="text-xs text-surface-container-high/80 font-medium">
               {formatDate(event.eventDate)}

@@ -17,6 +17,19 @@ import { generateTimelineTasks, calculateTaskMetrics } from "../services/timelin
 import { EventWizardSchema } from "../types/event";
 import { AiService } from "../services/aiService";
 import { formatINR, formatCompactINR, getDaysRemaining } from "../lib/utils";
+import {
+  getLocalDateString,
+  parseLocalDate,
+  diffCalendarDays,
+  addDaysToLocalDate,
+  isDateBeforeToday,
+  isDateSelectable,
+  canNavigateToPreviousMonth,
+  validateEventDate,
+  getCalendarGrid,
+  getDaysInMonth,
+} from "../lib/dateUtils";
+import { DEMO_BENGALI_WEDDING, createDemoBengaliWedding } from "../data/demoEvent";
 
 let passedCount = 0;
 let failedCount = 0;
@@ -257,6 +270,152 @@ async function runAllTests() {
     assert(formatINR(12500000) === "₹1,25,00,000", `12500000 formatted as ₹1,25,00,000 (Got: ${formatINR(12500000)})`);
     assert(formatCompactINR(800000) === "₹8.00 L", `Compact formatting: ₹8.00 L (Got: ${formatCompactINR(800000)})`);
     assert(formatCompactINR(15000000) === "₹1.50 Cr", `Compact formatting: ₹1.50 Cr (Got: ${formatCompactINR(15000000)})`);
+  }
+
+  // --- Test Suite 9: Dynamic Event Date Picker, Calendar Navigation & Countdown ---
+  console.log("\nSuite 9: Dynamic Event Date Picker, Calendar Boundaries & Countdown");
+  {
+    const todayStr = getLocalDateString();
+    const todayParsed = parseLocalDate(todayStr)!;
+    const tomorrowStr = addDaysToLocalDate(todayStr, 1);
+    const futureDateStr = addDaysToLocalDate(todayStr, 30);
+    const yesterdayStr = addDaysToLocalDate(todayStr, -1);
+    const pastDateStr = addDaysToLocalDate(todayStr, -10);
+
+    // 1. Today's date is selectable
+    const isTodaySelectable = isDateSelectable(todayStr, todayStr);
+    const todayVal = validateEventDate(todayStr, false, todayStr);
+    assert(isTodaySelectable, "1. Today's date is selectable (isDateSelectable)");
+    assert(todayVal.valid, "1b. Today's date passes validation without errors");
+
+    // 2. A future date is selectable
+    const isFutureSelectable = isDateSelectable(futureDateStr, todayStr);
+    const futureVal = validateEventDate(futureDateStr, false, todayStr);
+    assert(isFutureSelectable, "2. A future date is selectable");
+    assert(futureVal.valid, "2b. A future date passes validation");
+
+    // 3. Yesterday is rejected
+    const isYesterdaySelectable = isDateSelectable(yesterdayStr, todayStr);
+    const yesterdayVal = validateEventDate(yesterdayStr, false, todayStr);
+    assert(!isYesterdaySelectable, "3. Yesterday is rejected by isDateSelectable");
+    assert(!yesterdayVal.valid && Boolean(yesterdayVal.error?.includes("past")), "3b. Yesterday fails validation with clear past-date error");
+
+    // 4. A date from a previous month is disabled
+    const prevMonthDateStr = addDaysToLocalDate(todayStr, -35);
+    const isPrevMonthSelectable = isDateSelectable(prevMonthDateStr, todayStr);
+    assert(!isPrevMonthSelectable, "4. A date from a previous month is disabled");
+
+    // 5. A date from a previous year is disabled
+    const prevYearDateStr = `${todayParsed.year - 1}-${String(todayParsed.month).padStart(2, "0")}-${String(todayParsed.day).padStart(2, "0")}`;
+    const isPrevYearSelectable = isDateSelectable(prevYearDateStr, todayStr);
+    assert(!isPrevYearSelectable, "5. A date from a previous year is disabled");
+
+    // 6. Month navigation cannot move entirely before the current month
+    const canMoveBackInCurrentMonth = canNavigateToPreviousMonth(
+      todayParsed.year,
+      todayParsed.month,
+      todayParsed.year,
+      todayParsed.month
+    );
+    assert(!canMoveBackInCurrentMonth, "6a. Month navigation disabled for current month");
+
+    const canMoveBackInPreviousYear = canNavigateToPreviousMonth(
+      todayParsed.year - 1,
+      12,
+      todayParsed.year,
+      todayParsed.month
+    );
+    assert(!canMoveBackInPreviousYear, "6b. Month navigation disabled for previous year");
+
+    const canMoveBackFromNextMonth = canNavigateToPreviousMonth(
+      todayParsed.month === 12 ? todayParsed.year + 1 : todayParsed.year,
+      todayParsed.month === 12 ? 1 : todayParsed.month + 1,
+      todayParsed.year,
+      todayParsed.month
+    );
+    assert(canMoveBackFromNextMonth, "6c. Month navigation allowed to move back from next month to current month");
+
+    // 7. A saved draft containing a past date is handled correctly
+    const mockDraftWithPastDate = {
+      title: "Saved Bengali Wedding Draft",
+      eventDate: yesterdayStr,
+      city: "Kolkata",
+      totalBudget: 800000,
+    };
+    const draftDateIsPast = isDateBeforeToday(mockDraftWithPastDate.eventDate, todayStr);
+    assert(draftDateIsPast, "7a. Draft containing past date correctly flagged as expired");
+
+    const draftSanitized = {
+      ...mockDraftWithPastDate,
+      eventDate: draftDateIsPast ? "" : mockDraftWithPastDate.eventDate,
+    };
+    assert(
+      draftSanitized.eventDate === "" && draftSanitized.title === mockDraftWithPastDate.title,
+      "7b. Saved draft preserves other fields while requiring a fresh valid date selection"
+    );
+
+    // 8. A future event displays the correct countdown
+    const countdown30 = getDaysRemaining(futureDateStr, todayStr);
+    assert(
+      countdown30.days === 30 && countdown30.text === "30 days to go" && !countdown30.isPast && !countdown30.isToday,
+      `8a. 30 days future event displays "${countdown30.text}" (Expected: 30 days to go)`
+    );
+
+    const countdown1 = getDaysRemaining(tomorrowStr, todayStr);
+    assert(
+      countdown1.days === 1 && countdown1.text === "1 day to go",
+      `8b. 1 day future event displays "${countdown1.text}" (Expected: 1 day to go)`
+    );
+
+    // 9. An event occurring today displays "Today"
+    const countdownToday = getDaysRemaining(todayStr, todayStr);
+    assert(
+      countdownToday.days === 0 && countdownToday.text === "Today" && countdownToday.isToday && !countdownToday.isPast,
+      `9. Event occurring today displays "${countdownToday.text}" with isToday=true and isPast=false`
+    );
+
+    // 10. A past event displays "Event completed"
+    const countdownPast = getDaysRemaining(pastDateStr, todayStr);
+    assert(
+      countdownPast.isPast === true && countdownPast.text === "Event completed" && countdownPast.days === 0,
+      `10. Past event displays "${countdownPast.text}" and never displays a negative upcoming countdown`
+    );
+
+    // 11. Date calculations remain correct across months, years, and leap years
+    // Month rollover
+    assert(addDaysToLocalDate("2026-01-31", 1) === "2026-02-01", "11a. Month boundary: 2026-01-31 + 1 day = 2026-02-01");
+    // Year rollover
+    assert(addDaysToLocalDate("2026-12-31", 1) === "2027-01-01", "11b. Year boundary: 2026-12-31 + 1 day = 2027-01-01");
+    assert(diffCalendarDays("2027-01-01", "2026-12-31") === 1, "11c. Day difference across year boundary is exactly 1");
+
+    // Leap year verification
+    assert(getDaysInMonth(2028, 2) === 29, "11d. Leap year 2028 has 29 days in February");
+    assert(getDaysInMonth(2026, 2) === 28, "11e. Common year 2026 has 28 days in February");
+    assert(addDaysToLocalDate("2028-02-28", 1) === "2028-02-29", "11f. Leap day addition: 2028-02-28 + 1 = 2028-02-29");
+    assert(addDaysToLocalDate("2028-02-29", 1) === "2028-03-01", "11g. Post-leap addition: 2028-02-29 + 1 = 2028-03-01");
+    assert(diffCalendarDays("2028-03-01", "2028-02-28") === 2, "11h. Leap year day difference across Feb 29 is exactly 2");
+
+    // 12. Dynamic Demonstration Event Integrity
+    const demoEvent = createDemoBengaliWedding(todayStr);
+    assert(
+      isDateSelectable(demoEvent.eventDate, todayStr),
+      `12a. Demo event date (${demoEvent.eventDate}) is a valid relative future date from today (${todayStr})`
+    );
+    assert(
+      diffCalendarDays(demoEvent.eventDate, todayStr) === 180,
+      "12b. Demo event date is positioned at a consistent 180-day future planning milestone"
+    );
+    const demoTasks = demoEvent.timeline.tasks;
+    const task1 = demoTasks.find((t) => t.id === "task-1")!;
+    const expectedTask1Due = addDaysToLocalDate(demoEvent.eventDate, task1.relativeOffsetDays || 0);
+    assert(
+      task1.dueDate === expectedTask1Due,
+      `12c. Demo Task 1 due date (${task1.dueDate}) dynamically synchronizes with relative offset (${task1.relativeOffsetDays} days)`
+    );
+    assert(
+      demoEvent.budget.totalBudget === 800000 && demoEvent.budget.emergencyReserveAmount === 80000,
+      "12d. Demo event preserves exact budget reconciliation and deterministic finances"
+    );
   }
 
   // --- Final Results Summary ---

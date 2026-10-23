@@ -25,6 +25,7 @@ import { EventPlan } from "@/types/event";
 import { StorageService } from "@/services/storageService";
 import { formatDate, getDaysRemaining, formatINR } from "@/lib/utils";
 import { DEMO_BENGALI_WEDDING } from "@/data/demoEvent";
+import { useMidnightRefresh } from "@/hooks/useMidnightRefresh";
 
 // Dashboard Tab Subcomponents
 import { OverviewTab } from "@/components/dashboard/overview-tab";
@@ -76,7 +77,8 @@ function DashboardContent() {
     );
   }
 
-  const countdown = getDaysRemaining(event.eventDate);
+  const todayStr = useMidnightRefresh();
+  const countdown = getDaysRemaining(event.eventDate, todayStr);
 
   const TABS = [
     { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -118,9 +120,25 @@ function DashboardContent() {
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="font-label-sm text-xs py-1 px-3 rounded-full bg-secondary-container/60 text-on-secondary-container font-semibold hidden sm:inline-flex items-center gap-1.5 shadow-xs">
+            <span
+              id="event-countdown-badge"
+              className={`font-label-sm text-xs py-1 px-3 rounded-full font-semibold hidden sm:inline-flex items-center gap-1.5 shadow-xs ${
+                countdown.isPast
+                  ? "bg-surface-container-high text-on-surface-variant"
+                  : countdown.isToday
+                  ? "bg-primary-container text-on-primary"
+                  : "bg-secondary-container/60 text-on-secondary-container"
+              }`}
+            >
               <Clock className="h-3.5 w-3.5 text-secondary" />
-              <span>{countdown.text} ({formatDate(event.eventDate)})</span>
+              <span>
+                {countdown.text}
+                {countdown.isToday
+                  ? ` • ${formatDate(event.eventDate)}`
+                  : countdown.isPast
+                  ? ` (Was ${formatDate(event.eventDate)})`
+                  : ` (${formatDate(event.eventDate)})`}
+              </span>
             </span>
 
             <Button

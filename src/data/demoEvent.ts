@@ -1,12 +1,18 @@
 import { EventPlan } from "@/types/event";
+import { getLocalDateString, addDaysToLocalDate } from "@/lib/dateUtils";
 
-export const DEMO_BENGALI_WEDDING: EventPlan = {
-  id: "demo-bengali-wedding-2026",
-  title: "A Bengali Wedding Celebration: Sourav & Debolina",
-  tagline: "Traditional Bengali Elegance Meets Modern Timeless Design",
-  category: "wedding",
-  eventDate: "2026-11-28",
-  isTentativeDate: false,
+export function createDemoBengaliWedding(referenceDate?: string): EventPlan {
+  // Demo wedding is dynamically scheduled 180 days (approx 6 months) into the future
+  const ref = referenceDate || (typeof window !== "undefined" ? getLocalDateString() : "2026-10-24");
+  const eventDate = addDaysToLocalDate(ref, 180);
+
+  return {
+    id: "demo-bengali-wedding-2026",
+    title: "A Bengali Wedding Celebration: Sourav & Debolina",
+    tagline: "Traditional Bengali Elegance Meets Modern Timeless Design",
+    category: "wedding",
+    eventDate,
+    isTentativeDate: false,
   location: {
     city: "Kolkata, West Bengal",
     venueName: "The Rajbari Courtyard & Heritage Lawns, Salt Lake",
@@ -295,7 +301,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-1",
         title: "Lock Auspicious Bengali Mahurat Date",
         description: "Consult Panjika almanac with family priest for lagna timings.",
-        dueDate: "2026-06-15",
+        dueDate: addDaysToLocalDate(eventDate, -166),
         relativeOffsetDays: -166,
         priority: "critical",
         status: "completed",
@@ -305,7 +311,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-2",
         title: "Finalize Rajbari Courtyard Contract",
         description: "Paid 50% advance booking deposit and verified lawn lighting curfew (10:00 PM).",
-        dueDate: "2026-07-20",
+        dueDate: addDaysToLocalDate(eventDate, -131),
         relativeOffsetDays: -131,
         priority: "critical",
         status: "completed",
@@ -315,7 +321,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-3",
         title: "Menu Food Tasting with Sonar Bangla Caterers",
         description: "Finalized Bhetki Paturi marinade spices and verified authentic Mutton Kosha slow-cooking.",
-        dueDate: "2026-08-10",
+        dueDate: addDaysToLocalDate(eventDate, -110),
         relativeOffsetDays: -110,
         priority: "high",
         status: "completed",
@@ -325,7 +331,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-4",
         title: "Confirm Candid Cinema Crew & Drone Permissions",
         description: "Contracted Ballygunge photo team with 2 candid leads and drone clearance.",
-        dueDate: "2026-09-01",
+        dueDate: addDaysToLocalDate(eventDate, -88),
         relativeOffsetDays: -88,
         priority: "high",
         status: "completed",
@@ -335,7 +341,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-5",
         title: "Bridal Banarasi Saree Tailoring & Blouse Fitting",
         description: "Check zari embroidery and trial fitting for the crimson reception Banarasi.",
-        dueDate: "2026-10-15",
+        dueDate: addDaysToLocalDate(eventDate, -44),
         relativeOffsetDays: -44,
         priority: "high",
         status: "in_progress",
@@ -345,7 +351,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-6",
         title: "Dispatch Printed Scroll Invites to Relatives",
         description: "Courier traditional postal wedding cards to elder family members across Bengal.",
-        dueDate: "2026-10-25",
+        dueDate: addDaysToLocalDate(eventDate, -34),
         relativeOffsetDays: -34,
         priority: "medium",
         status: "in_progress",
@@ -355,7 +361,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-7",
         title: "Order Specialized Bridal Mukut & Groom Topor",
         description: "Commission artisan from Kumartuli for handcrafted pith (shola) headgear.",
-        dueDate: "2026-11-05",
+        dueDate: addDaysToLocalDate(eventDate, -23),
         relativeOffsetDays: -23,
         priority: "medium",
         status: "todo",
@@ -365,7 +371,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-8",
         title: "Approve 3D Mandap Floral Mockup & Alpona Design",
         description: "Review floral string density and ensure entrance arch has auspicious banana tree shoots.",
-        dueDate: "2026-11-12",
+        dueDate: addDaysToLocalDate(eventDate, -16),
         relativeOffsetDays: -16,
         priority: "high",
         status: "todo",
@@ -375,7 +381,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-9",
         title: "Lock Guaranteed Plate Count with Caterer (300 Guests)",
         description: "Conduct final phone confirmation check with RSVP list.",
-        dueDate: "2026-11-18",
+        dueDate: addDaysToLocalDate(eventDate, -10),
         relativeOffsetDays: -10,
         priority: "critical",
         status: "todo",
@@ -385,7 +391,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-10",
         title: "Assemble Cash Envelopes for Purohit, Shehnai & Tips",
         description: "Prepare labelled dakshina envelopes to avoid last-minute cash scrambling.",
-        dueDate: "2026-11-25",
+        dueDate: addDaysToLocalDate(eventDate, -3),
         relativeOffsetDays: -3,
         priority: "critical",
         status: "todo",
@@ -395,7 +401,7 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
         id: "task-11",
         title: "Day-of Runsheet Check & Brother's Piri Rehearsal",
         description: "Brief brothers on safely lifting bride during Saat Paake Ghaura.",
-        dueDate: "2026-11-27",
+        dueDate: addDaysToLocalDate(eventDate, -1),
         relativeOffsetDays: -1,
         priority: "critical",
         status: "todo",
@@ -570,3 +576,6 @@ export const DEMO_BENGALI_WEDDING: EventPlan = {
   updatedAt: "2026-10-24T00:00:00.000Z",
   isDemo: true,
 };
+}
+
+export const DEMO_BENGALI_WEDDING: EventPlan = createDemoBengaliWedding();

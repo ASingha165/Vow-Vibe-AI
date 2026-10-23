@@ -1,5 +1,19 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { parseLocalDate, getDaysRemaining as getDaysRemainingCore, getLocalDateString } from "./dateUtils";
+
+export {
+  getLocalDateString,
+  parseLocalDate,
+  diffCalendarDays,
+  addDaysToLocalDate,
+  isDateBeforeToday,
+  isDateSelectable,
+  canNavigateToPreviousMonth,
+  validateEventDate,
+  getTimeUntilNextMidnight,
+  getCalendarGrid,
+} from "./dateUtils";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -53,13 +67,23 @@ export function formatCompactINR(amount: number): string {
 
 /**
  * Format standard date to readable string (e.g. 15 Nov 2026)
+ * Uses timezone-safe calendar components.
  */
 export function formatDate(dateStr: string): string {
   if (!dateStr) return "Tentative Date";
   try {
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    return date.toLocaleDateString("en-IN", {
+    const parsed = parseLocalDate(dateStr);
+    if (parsed) {
+      const localDate = new Date(parsed.year, parsed.month - 1, parsed.day);
+      return localDate.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    }
+    const fallback = new Date(dateStr);
+    if (isNaN(fallback.getTime())) return dateStr;
+    return fallback.toLocaleDateString("en-IN", {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -70,28 +94,8 @@ export function formatDate(dateStr: string): string {
 }
 
 /**
- * Calculate countdown days from today
+ * Calculate countdown days from today using local calendar day math.
  */
-export function getDaysRemaining(targetDateStr: string): {
-  days: number;
-  isPast: boolean;
-  text: string;
-} {
-  if (!targetDateStr) return { days: 0, isPast: false, text: "Date TBD" };
-  try {
-    const target = new Date(targetDateStr);
-    const today = new Date();
-    // Normalize to midnight
-    target.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-
-    const diffMs = target.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return { days: 0, isPast: false, text: "Today!" };
-    if (diffDays < 0) return { days: Math.abs(diffDays), isPast: true, text: `${Math.abs(diffDays)} days ago` };
-    return { days: diffDays, isPast: false, text: `${diffDays} days to go` };
-  } catch {
-    return { days: 0, isPast: false, text: "Date TBD" };
-  }
+export function getDaysRemaining(targetDateStr: string, todayStr?: string) {
+  return getDaysRemainingCore(targetDateStr, todayStr || getLocalDateString());
 }

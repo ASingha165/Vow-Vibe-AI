@@ -34,9 +34,18 @@ export const StorageService = {
         return initial;
       }
       const parsed: EventPlan[] = JSON.parse(raw);
-      // Ensure demo event exists
-      if (!parsed.some((e) => e.id === DEMO_BENGALI_WEDDING.id)) {
+      // Ensure demo event exists and is dynamically up to date
+      const demoIdx = parsed.findIndex((e) => e.id === DEMO_BENGALI_WEDDING.id);
+      if (demoIdx === -1) {
         parsed.unshift(DEMO_BENGALI_WEDDING);
+        localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(parsed));
+      } else if (parsed[demoIdx].isDemo) {
+        // Keep demo event date dynamically fresh
+        parsed[demoIdx] = {
+          ...parsed[demoIdx],
+          eventDate: DEMO_BENGALI_WEDDING.eventDate,
+          timeline: DEMO_BENGALI_WEDDING.timeline,
+        };
         localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(parsed));
       }
       return parsed;
