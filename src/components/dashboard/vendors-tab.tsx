@@ -13,19 +13,16 @@ import {
   Columns,
   Trash2,
   Edit2,
-  ShieldCheck,
-  HelpCircle,
-  Lightbulb,
+  Receipt,
+  Sparkles,
 } from "lucide-react";
 import { EventPlan, VendorItem, VendorStatus } from "@/types/event";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input, Textarea } from "@/components/ui/input";
 import { Modal } from "@/components/ui/modal";
 import { useToast } from "@/components/ui/toast";
 import { formatINR } from "@/lib/utils";
-import { checkVendorBudgetFit, VENDOR_REQUIREMENTS_GUIDE } from "@/services/vendorEngine";
+import { checkVendorBudgetFit } from "@/services/vendorEngine";
 import { StorageService } from "@/services/storageService";
 
 interface VendorsTabProps {
@@ -37,12 +34,16 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
   const { toast } = useToast();
 
   const [selectedCategory, setSelectedCategory] = React.useState<string>("all");
+  const [searchQuery, setSearchQuery] = React.useState<string>("");
   const [isAddModalOpen, setIsAddModalOpen] = React.useState(false);
   const [editingVendor, setEditingVendor] = React.useState<VendorItem | null>(null);
 
-  // Comparison State (ids of vendors selected for comparison)
+  // Comparison State
   const [comparisonIds, setComparisonIds] = React.useState<string[]>([]);
   const [isCompareModalOpen, setIsCompareModalOpen] = React.useState(false);
+
+  // Quote Breakdown Modal State
+  const [quoteVendor, setQuoteVendor] = React.useState<VendorItem | null>(null);
 
   // Form State
   const [vendorForm, setVendorForm] = React.useState<{
@@ -72,8 +73,15 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
   });
 
   const filteredVendors = event.vendors.filter((v) => {
-    if (selectedCategory === "all") return true;
-    return v.category.toLowerCase().includes(selectedCategory.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" ||
+      v.category.toLowerCase().includes(selectedCategory.toLowerCase());
+    const matchesQuery =
+      searchQuery.trim() === "" ||
+      v.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      v.category.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesQuery;
   });
 
   const handleToggleCompare = (id: string) => {
@@ -195,271 +203,316 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
   const comparedVendors = event.vendors.filter((v) => comparisonIds.includes(v.id));
 
   return (
-    <div className="space-y-6 animate-in fade-in-50">
-      {/* Top Banner and Filter Bar */}
-      <Card className="p-4 sm:p-5">
+    <div className="space-y-6">
+      {/* Stitch Vendor Directory Header & Intelligence Ribbon */}
+      <div className="bg-surface-container-lowest rounded-2xl p-5 sm:p-6 border border-primary-container/10 shadow-sm space-y-4">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
           <div>
-            <h3 className="font-serif text-lg font-bold text-[#22092C]">Vendor Directory &amp; Intelligence</h3>
-            <p className="text-xs text-[#5E4B66]">
-              Track quotes, evaluate budget compatibility, and compare potential partners.
+            <div className="flex items-center gap-2">
+              <span className="material-symbols-outlined text-secondary text-[22px]">storefront</span>
+              <h3 className="font-serif text-lg font-bold text-primary">Vendor Intelligence &amp; Comparisons</h3>
+            </div>
+            <p className="font-sans text-xs text-on-surface-variant mt-0.5">
+              Screen quotes, evaluate budget elasticity, and compare competitive bids side-by-side.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
             {comparisonIds.length > 0 && (
-              <Button
-                variant="gold"
-                size="sm"
+              <button
                 onClick={() => setIsCompareModalOpen(true)}
-                className="gap-1.5 shadow-xs"
+                className="px-4 py-1.5 rounded-full bg-secondary-container text-on-secondary-container text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm"
               >
-                <Columns className="h-4 w-4" />
+                <Columns className="h-3.5 w-3.5" />
                 <span>Compare Selected ({comparisonIds.length})</span>
-              </Button>
+              </button>
             )}
 
-            <Button
+            <button
               onClick={() => {
                 setEditingVendor(null);
                 resetForm();
                 setIsAddModalOpen(true);
               }}
-              size="sm"
-              className="gap-1.5"
+              className="px-4 py-1.5 rounded-full bg-primary-container text-on-primary text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm"
             >
-              <PlusCircle className="h-4 w-4" />
-              <span>Add Vendor</span>
-            </Button>
+              <span className="material-symbols-outlined text-[16px]">add_business</span>
+              <span>+ Record Vendor</span>
+            </button>
           </div>
         </div>
 
-        {/* Category Filter Pills */}
-        <div className="mt-4 pt-3 border-t border-[#FAF0F3] flex flex-wrap gap-1.5">
-          <button
-            onClick={() => setSelectedCategory("all")}
-            className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-              selectedCategory === "all"
-                ? "bg-[#3B1242] text-white"
-                : "bg-[#FAF8F5] text-[#5E4B66] border border-[#E5D5B5] hover:bg-white"
-            }`}
-          >
-            All Vendors ({event.vendors.length})
-          </button>
-          {event.budget.categories.map((c) => (
+        {/* Search & Category Filter Chips */}
+        <div className="pt-3 border-t border-surface-container flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          {/* Search bar */}
+          <div className="relative flex-1 max-w-sm">
+            <span className="material-symbols-outlined absolute left-3 top-2.5 text-[18px] text-on-surface-variant">search</span>
+            <input
+              type="text"
+              placeholder="Search vendors, locations, specialties..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-full border border-primary-container/15 bg-surface pl-9 pr-3 py-1.5 text-xs text-primary focus:outline-none focus:border-primary-container"
+            />
+          </div>
+
+          {/* Category Chips Ribbon */}
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
             <button
-              key={c.id}
-              onClick={() => setSelectedCategory(c.name)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition-all cursor-pointer ${
-                selectedCategory === c.name
-                  ? "bg-[#3B1242] text-white"
-                  : "bg-[#FAF8F5] text-[#5E4B66] border border-[#E5D5B5] hover:bg-white"
+              onClick={() => setSelectedCategory("all")}
+              className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                selectedCategory === "all"
+                  ? "bg-primary-container text-on-primary shadow-sm"
+                  : "bg-surface-container text-on-surface-variant hover:text-primary"
               }`}
             >
-              {c.name.split(" ")[0]}
+              All ({event.vendors.length})
             </button>
-          ))}
+            {event.budget.categories.map((c) => (
+              <button
+                key={c.id}
+                onClick={() => setSelectedCategory(c.name)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                  selectedCategory === c.name
+                    ? "bg-primary-container text-on-primary shadow-sm"
+                    : "bg-surface-container text-on-surface-variant hover:text-primary"
+                }`}
+              >
+                {c.name.split(" ")[0]}
+              </button>
+            ))}
+          </div>
         </div>
-      </Card>
+      </div>
 
       {/* Vendor Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {filteredVendors.map((vendor) => {
           const budgetFit = checkVendorBudgetFit(vendor, event.budget.categories);
           const isSelectedForCompare = comparisonIds.includes(vendor.id);
+          const perGuestRate = event.guests.expectedCount > 0
+            ? Math.round(vendor.quotedPrice / event.guests.expectedCount)
+            : 0;
 
           return (
-            <Card
+            <div
               key={vendor.id}
-              className={`p-5 flex flex-col justify-between transition-all ${
-                isSelectedForCompare ? "ring-2 ring-[#C5A059] border-[#C5A059]" : ""
+              className={`rounded-2xl bg-surface-container-lowest p-5 border shadow-xs transition-all flex flex-col justify-between ${
+                isSelectedForCompare
+                  ? "ring-2 ring-secondary border-secondary"
+                  : "border-primary-container/10 hover:shadow-sm"
               }`}
             >
               <div className="space-y-3">
-                {/* Header & Badges */}
-                <div className="flex items-start justify-between gap-2">
-                  <Badge variant="plum" className="text-[10px]">
-                    {vendor.category}
-                  </Badge>
-                  {vendor.isSample && (
-                    <Badge variant="outline" className="text-[9px] py-0">
-                      Illustrative Sample
-                    </Badge>
-                  )}
+                {/* Header with Title and Comparison Checkbox */}
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex flex-col min-w-0">
+                    <span className="font-sans text-[11px] font-bold uppercase tracking-wider text-secondary">
+                      {vendor.category}
+                    </span>
+                    <h4 className="font-serif font-bold text-base text-primary leading-tight truncate mt-0.5">
+                      {vendor.name}
+                    </h4>
+                    <div className="flex items-center gap-1 text-on-surface-variant text-xs mt-0.5">
+                      <span className="material-symbols-outlined text-[13px] text-secondary">location_on</span>
+                      <span className="truncate">{vendor.location}</span>
+                    </div>
+                  </div>
+
+                  <label className="flex items-center gap-1.5 cursor-pointer select-none shrink-0" title="Select for side-by-side comparison">
+                    <input
+                      type="checkbox"
+                      checked={isSelectedForCompare}
+                      onChange={() => handleToggleCompare(vendor.id)}
+                      className="w-4 h-4 rounded text-primary-container accent-[#35213D] cursor-pointer"
+                    />
+                    <span className="font-sans text-[10px] text-on-surface-variant font-medium">Compare</span>
+                  </label>
                 </div>
 
-                <div>
-                  <h4 className="font-serif font-bold text-base text-[#22092C] leading-snug">{vendor.name}</h4>
-                  <p className="text-xs text-[#7A6B80] flex items-center gap-1 mt-0.5">
-                    <MapPin className="h-3 w-3 text-[#C5A059]" /> {vendor.location}
-                  </p>
-                </div>
-
-                {/* Quoted Price & Budget Compatibility */}
-                <div className="rounded-xl bg-[#FAF8F5] p-3 border border-[#E5D5B5]/60 space-y-1.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-[11px] text-[#5E4B66]">Quoted Price:</span>
-                    <span className="font-serif font-bold text-base text-[#3B1242]">
+                {/* Quoted Pricing Strip */}
+                <div className="flex items-baseline justify-between py-1 border-y border-surface-container/60">
+                  <div>
+                    <span className="font-serif text-xl font-bold text-primary">
                       {formatINR(vendor.quotedPrice)}
                     </span>
+                    {perGuestRate > 0 && (
+                      <span className="font-sans text-[11px] text-on-surface-variant ml-1.5">
+                        (₹{perGuestRate} / guest)
+                      </span>
+                    )}
                   </div>
-                  <div className="flex justify-between items-center pt-1 border-t border-[#EADBDF]">
-                    <span className="text-[10px] text-[#7A6B80]">Budget Fit:</span>
-                    <Badge
-                      variant={
-                        budgetFit.badgeVariant === "success"
-                          ? "success"
-                          : budgetFit.badgeVariant === "warning"
-                          ? "warning"
-                          : budgetFit.badgeVariant === "danger"
-                          ? "danger"
-                          : "default"
-                      }
-                      className="text-[9px] py-0"
-                    >
-                      {budgetFit.badgeText}
-                    </Badge>
-                  </div>
+                  <span className="px-2.5 py-0.5 rounded-full bg-surface-container text-primary text-[10px] font-semibold capitalize flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+                    <span>{vendor.status}</span>
+                  </span>
                 </div>
 
-                {/* Status & Rating */}
+                {/* Budget Elasticity Compatibility Indicator */}
                 <div className="flex items-center justify-between text-xs">
-                  <div className="flex items-center space-x-1 text-[#8C6D23]">
-                    <Star className="h-3.5 w-3.5 fill-current" />
-                    <span className="font-bold">{vendor.rating || 4.5}</span>
-                    <span className="text-[#7A6B80]">/ 5</span>
-                  </div>
-
-                  <Badge
-                    variant={
-                      vendor.status === "booked"
-                        ? "success"
-                        : vendor.status === "shortlisted"
-                        ? "gold"
-                        : vendor.status === "quoted"
-                        ? "rose"
-                        : "default"
-                    }
-                    className="capitalize text-[10px]"
+                  <span className="text-on-surface-variant text-[11px]">Budget Allocation Fit:</span>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                      budgetFit.badgeVariant === "success"
+                        ? "bg-emerald-500/15 text-emerald-800"
+                        : budgetFit.badgeVariant === "warning"
+                        ? "bg-amber-500/15 text-amber-900"
+                        : "bg-error/15 text-error"
+                    }`}
                   >
-                    {vendor.status}
-                  </Badge>
+                    {budgetFit.badgeText}
+                  </span>
                 </div>
 
-                {/* Pros and Cons */}
+                {/* Signature Highlights (Stitch pattern) */}
                 {vendor.pros && vendor.pros.length > 0 && (
-                  <div className="space-y-1 text-xs">
-                    <span className="text-[10px] font-semibold text-emerald-800 uppercase">Advantages:</span>
-                    <p className="text-[#5E4B66] text-[11px] leading-relaxed">{vendor.pros.join(" • ")}</p>
+                  <div className="rounded-xl bg-surface-container-low p-2.5 flex flex-col gap-1 border border-primary-container/5">
+                    <div className="flex items-center gap-1 text-secondary text-xs font-semibold">
+                      <span className="material-symbols-outlined text-[15px]">stars</span>
+                      <span>Signature Highlights</span>
+                    </div>
+                    <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
+                      {vendor.pros.join(" • ")}
+                    </p>
                   </div>
                 )}
+
+                {/* Rating & Contact coords */}
+                <div className="flex items-center justify-between text-xs pt-1">
+                  <div className="flex items-center gap-1 text-secondary">
+                    <Star className="h-3.5 w-3.5 fill-current" />
+                    <span className="font-bold">{vendor.rating || 4.5}</span>
+                    <span className="text-on-surface-variant/70 text-[11px]">/ 5</span>
+                  </div>
+
+                  {vendor.contactPhone && (
+                    <span className="text-on-surface-variant text-[11px] flex items-center gap-1">
+                      <Phone className="h-3 w-3 text-secondary" />
+                      <span>{vendor.contactPhone}</span>
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {/* Bottom Actions */}
-              <div className="mt-4 pt-3 border-t border-[#FAF0F3] flex items-center justify-between">
+              {/* Bottom Actions Ribbon */}
+              <div className="mt-4 pt-3 border-t border-surface-container flex items-center justify-between gap-2">
                 <button
-                  onClick={() => handleToggleCompare(vendor.id)}
-                  className={`text-xs font-semibold flex items-center gap-1 cursor-pointer transition-colors ${
-                    isSelectedForCompare ? "text-[#C5A059]" : "text-[#5E4B66] hover:text-[#22092C]"
-                  }`}
+                  onClick={() => setQuoteVendor(vendor)}
+                  className="h-8 px-2.5 rounded-lg bg-surface-container text-primary text-xs font-semibold flex items-center gap-1 hover:bg-surface-container-high transition-colors"
                 >
-                  <Columns className="h-3.5 w-3.5" />
-                  <span>{isSelectedForCompare ? "Comparing" : "Compare"}</span>
+                  <Receipt className="h-3.5 w-3.5 text-secondary" />
+                  <span>Quote Breakdown</span>
                 </button>
 
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center gap-1">
                   <button
                     onClick={() => openEditModal(vendor)}
-                    className="p-1 rounded text-[#5E4B66] hover:bg-[#FAF0F3] hover:text-[#22092C] cursor-pointer"
+                    className="p-1.5 rounded-md text-on-surface-variant hover:text-primary hover:bg-surface-container transition-colors"
+                    title="Edit Vendor"
                   >
                     <Edit2 className="h-3.5 w-3.5" />
                   </button>
                   <button
                     onClick={() => handleDeleteVendor(vendor.id)}
-                    className="p-1 rounded text-[#5E4B66] hover:bg-rose-50 hover:text-rose-600 cursor-pointer"
+                    className="p-1.5 rounded-md text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors"
+                    title="Delete Vendor"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 </div>
               </div>
-            </Card>
+            </div>
           );
         })}
       </div>
 
-      {/* Side-by-Side Comparison Modal */}
+      {/* Side-by-Side Comparison Modal (Stitch table layout) */}
       <Modal
         isOpen={isCompareModalOpen}
         onClose={() => setIsCompareModalOpen(false)}
-        title="Side-by-Side Vendor Comparison"
-        description="Evaluate criteria, quoted prices, ratings, and strategic advantages."
+        title="Side-by-side Quote Comparison"
+        description="Comprehensive evaluation of rates, service deliverables, and budget compatibility."
         maxWidth="2xl"
       >
-        <div className="overflow-x-auto space-y-4">
-          <table className="w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-[#EADBDF] text-[#5E4B66]">
-                <th className="py-2.5 px-3">Criteria</th>
-                {comparedVendors.map((v) => (
-                  <th key={v.id} className="py-2.5 px-3 font-serif font-bold text-sm text-[#22092C]">
-                    {v.name}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-[#FAF0F3]">
-              <tr>
-                <td className="py-2.5 px-3 font-semibold text-[#5E4B66]">Category</td>
-                {comparedVendors.map((v) => (
-                  <td key={v.id} className="py-2.5 px-3">
-                    <Badge variant="plum" className="text-[10px]">
+        <div className="space-y-4">
+          <div className="overflow-x-auto rounded-xl border border-primary-container/10">
+            <table className="w-full text-left text-xs bg-surface-container-lowest">
+              <thead className="border-b border-surface-container bg-surface-container-low text-on-surface-variant font-bold text-[10px] uppercase tracking-wider">
+                <tr>
+                  <th className="py-3 px-3">Metric</th>
+                  {comparedVendors.map((v) => (
+                    <th key={v.id} className="py-3 px-3 font-serif font-bold text-sm text-primary">
+                      {v.name}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-surface-container">
+                <tr>
+                  <td className="py-2.5 px-3 font-semibold text-on-surface-variant">Category</td>
+                  {comparedVendors.map((v) => (
+                    <td key={v.id} className="py-2.5 px-3 font-medium text-primary">
                       {v.category}
-                    </Badge>
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <td className="py-2.5 px-3 font-semibold text-[#5E4B66]">Quoted Price</td>
-                {comparedVendors.map((v) => (
-                  <td key={v.id} className="py-2.5 px-3 font-bold text-sm text-[#3B1242]">
-                    {formatINR(v.quotedPrice)}
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <td className="py-2.5 px-3 font-semibold text-[#5E4B66]">Rating</td>
-                {comparedVendors.map((v) => (
-                  <td key={v.id} className="py-2.5 px-3 font-semibold text-[#8C6D23]">
-                    ⭐ {v.rating || 4.5} / 5
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <td className="py-2.5 px-3 font-semibold text-[#5E4B66]">Status</td>
-                {comparedVendors.map((v) => (
-                  <td key={v.id} className="py-2.5 px-3 capitalize font-medium text-[#22092C]">
-                    {v.status}
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <td className="py-2.5 px-3 font-semibold text-[#5E4B66]">Advantages</td>
-                {comparedVendors.map((v) => (
-                  <td key={v.id} className="py-2.5 px-3 text-[#5E4B66] text-[11px]">
-                    {(v.pros || []).join(", ") || "—"}
-                  </td>
-                ))}
-              </tr>
-              <tr>
-                <td className="py-2.5 px-3 font-semibold text-[#5E4B66]">Considerations</td>
-                {comparedVendors.map((v) => (
-                  <td key={v.id} className="py-2.5 px-3 text-[#B33951] text-[11px]">
-                    {(v.cons || []).join(", ") || "—"}
-                  </td>
-                ))}
-              </tr>
-            </tbody>
-          </table>
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-2.5 px-3 font-semibold text-on-surface-variant">Quoted Total</td>
+                  {comparedVendors.map((v) => (
+                    <td key={v.id} className="py-2.5 px-3 font-serif font-bold text-sm text-primary">
+                      {formatINR(v.quotedPrice)}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-2.5 px-3 font-semibold text-on-surface-variant">Rating</td>
+                  {comparedVendors.map((v) => (
+                    <td key={v.id} className="py-2.5 px-3 font-semibold text-secondary">
+                      ⭐ {v.rating || 4.5} / 5
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-2.5 px-3 font-semibold text-on-surface-variant">Pipeline Status</td>
+                  {comparedVendors.map((v) => (
+                    <td key={v.id} className="py-2.5 px-3 capitalize font-medium text-primary">
+                      {v.status}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-2.5 px-3 font-semibold text-on-surface-variant">Signature Deliverables</td>
+                  {comparedVendors.map((v) => (
+                    <td key={v.id} className="py-2.5 px-3 text-xs text-on-surface-variant leading-relaxed">
+                      {(v.pros || []).join(" • ") || "—"}
+                    </td>
+                  ))}
+                </tr>
+                <tr>
+                  <td className="py-2.5 px-3 font-semibold text-on-surface-variant">Constraints / Notes</td>
+                  {comparedVendors.map((v) => (
+                    <td key={v.id} className="py-2.5 px-3 text-xs text-error/90 leading-relaxed">
+                      {(v.cons || []).join(" • ") || "—"}
+                    </td>
+                  ))}
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Stitch AI Recommendation Banner */}
+          {comparedVendors.length >= 2 && (
+            <div className="rounded-xl bg-surface-container p-3 flex items-center justify-between border border-primary-container/10">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-secondary text-[18px]">auto_awesome</span>
+                <span className="font-serif font-bold text-xs text-primary">AI Recommendation</span>
+              </div>
+              <span className="font-sans text-xs font-bold text-secondary">
+                {comparedVendors[0].name} provides optimal cost-to-benefit ratio
+              </span>
+            </div>
+          )}
+
           <div className="pt-2 flex justify-end">
             <Button variant="outline" size="sm" onClick={() => setIsCompareModalOpen(false)}>
               Close Comparison
@@ -467,6 +520,52 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
           </div>
         </div>
       </Modal>
+
+      {/* Quote Breakdown Modal */}
+      {quoteVendor && (
+        <Modal
+          isOpen={!!quoteVendor}
+          onClose={() => setQuoteVendor(null)}
+          title={`Quote Breakdown: ${quoteVendor.name}`}
+          description={`Category: ${quoteVendor.category} • Location: ${quoteVendor.location}`}
+        >
+          <div className="space-y-4">
+            <div className="p-4 rounded-xl bg-surface-container-low border border-primary-container/10 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-on-surface-variant font-medium">Quoted Total:</span>
+                <span className="font-serif text-xl font-bold text-primary">
+                  {formatINR(quoteVendor.quotedPrice)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center text-xs">
+                <span className="text-on-surface-variant">Status:</span>
+                <span className="capitalize font-semibold text-primary">{quoteVendor.status}</span>
+              </div>
+              {quoteVendor.contactPhone && (
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-on-surface-variant">Contact:</span>
+                  <span className="font-mono text-primary">{quoteVendor.contactPhone}</span>
+                </div>
+              )}
+            </div>
+
+            {quoteVendor.notes && (
+              <div className="space-y-1">
+                <h5 className="font-serif font-bold text-xs uppercase tracking-wider text-primary">Negotiation &amp; Scope Notes</h5>
+                <p className="font-sans text-xs text-on-surface-variant p-3 rounded-xl bg-surface-container-lowest border border-primary-container/10 leading-relaxed">
+                  {quoteVendor.notes}
+                </p>
+              </div>
+            )}
+
+            <div className="pt-2 flex justify-end">
+              <Button variant="primary" size="sm" onClick={() => setQuoteVendor(null)}>
+                Done
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
 
       {/* Add / Edit Vendor Modal */}
       <Modal
@@ -478,20 +577,20 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
         <form onSubmit={handleSaveVendor} className="space-y-4">
           <Input
             label="Vendor / Agency Name *"
-            placeholder="e.g. Royal Bengal Heritage Banquet"
+            placeholder="e.g. Saptapadi Heritage Caterers"
             value={vendorForm.name}
             onChange={(e) => setVendorForm({ ...vendorForm, name: e.target.value })}
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">
                 Category
               </label>
               <select
                 value={vendorForm.category}
                 onChange={(e) => setVendorForm({ ...vendorForm, category: e.target.value })}
-                className="flex h-11 w-full rounded-xl border border-[#E5D5B5] bg-white px-3.5 py-2 text-sm text-[#22092C]"
+                className="flex h-11 w-full rounded-xl border border-primary-container/20 bg-surface px-3.5 py-2 text-sm text-primary"
               >
                 {event.budget.categories.map((c) => (
                   <option key={c.id} value={c.name}>
@@ -518,13 +617,13 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
             />
 
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-on-surface-variant mb-1.5">
                 Status
               </label>
               <select
                 value={vendorForm.status}
                 onChange={(e) => setVendorForm({ ...vendorForm, status: e.target.value as VendorStatus })}
-                className="flex h-11 w-full rounded-xl border border-[#E5D5B5] bg-white px-3.5 py-2 text-sm text-[#22092C]"
+                className="flex h-11 w-full rounded-xl border border-primary-container/20 bg-surface px-3.5 py-2 text-sm text-primary"
               >
                 <option value="researching">Researching</option>
                 <option value="contacted">Contacted</option>
@@ -556,14 +655,14 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
 
           <Input
             label="Pros / Key Deliverables (comma separated)"
-            placeholder="e.g. Complimentary bridal suite, 100kVA generator, Drone included"
+            placeholder="e.g. Authentic Bhetki Paturi, Chingri Malai Curry, Nolen Gur Sandesh"
             value={vendorForm.pros}
             onChange={(e) => setVendorForm({ ...vendorForm, pros: e.target.value })}
           />
 
           <Input
             label="Cons / Constraints (comma separated)"
-            placeholder="e.g. 10 PM sound curfew, strict cancellation terms"
+            placeholder="e.g. Bone china cutlery extra rental (+₹12,000)"
             value={vendorForm.cons}
             onChange={(e) => setVendorForm({ ...vendorForm, cons: e.target.value })}
           />
@@ -575,7 +674,7 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
             onChange={(e) => setVendorForm({ ...vendorForm, notes: e.target.value })}
           />
 
-          <div className="pt-4 flex justify-end space-x-2 border-t border-[#FAF0F3]">
+          <div className="pt-4 flex justify-end space-x-2 border-t border-surface-container">
             <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)}>
               Cancel
             </Button>
@@ -588,3 +687,4 @@ export function VendorsTab({ event, onUpdateEvent }: VendorsTabProps) {
     </div>
   );
 }
+

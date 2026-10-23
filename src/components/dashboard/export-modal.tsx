@@ -15,7 +15,6 @@ import {
 import { EventPlan } from "@/types/event";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 import { ExportService } from "@/services/exportService";
 import { StorageService } from "@/services/storageService";
@@ -56,124 +55,142 @@ export function ExportTab({ event, onUpdateEvent }: ExportTabProps) {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in-50">
+    <div className="space-y-6">
       {/* Export Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* CSV Data Downloads */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <FileSpreadsheet className="h-5 w-5 text-[#C5A059]" />
-              <CardTitle>Structured CSV Exports</CardTitle>
+        <div className="rounded-2xl bg-surface-container-lowest p-6 border border-primary-container/10 shadow-sm space-y-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full bg-secondary-container/70 flex items-center justify-center text-secondary">
+              <FileSpreadsheet className="h-5 w-5" />
             </div>
-            <CardDescription>
-              Download tabular spreadsheets compatible with Microsoft Excel, Google Sheets, or Numbers.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between rounded-xl bg-[#FAF8F5] p-3 border border-[#E5D5B5]/60">
+            <div>
+              <h3 className="font-serif font-bold text-base text-primary">Structured CSV Data Exports</h3>
+              <p className="font-sans text-xs text-on-surface-variant">
+                Download tabular spreadsheets compatible with Microsoft Excel, Google Sheets, or Numbers.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-2.5 pt-2">
+            <div className="flex items-center justify-between rounded-xl bg-surface-container-low p-3.5 border border-primary-container/5">
               <div>
-                <p className="text-xs font-semibold text-[#22092C]">Complete Budget Breakdown</p>
-                <p className="text-[11px] text-[#7A6B80]">Category allocations and line-item expenses</p>
+                <p className="text-xs font-bold text-primary">Complete Budget Ledger</p>
+                <p className="text-[11px] text-on-surface-variant">Category allocations, line-item expenses &amp; variances</p>
               </div>
-              <Button size="sm" variant="outline" onClick={() => ExportService.exportBudgetCSV(event)} className="gap-1.5 text-xs">
+              <button
+                onClick={() => ExportService.exportBudgetCSV(event)}
+                className="px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm"
+              >
                 <Download className="h-3.5 w-3.5" />
-                <span>CSV</span>
-              </Button>
+                <span>Download CSV</span>
+              </button>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-[#FAF8F5] p-3 border border-[#E5D5B5]/60">
+            <div className="flex items-center justify-between rounded-xl bg-surface-container-low p-3.5 border border-primary-container/5">
               <div>
-                <p className="text-xs font-semibold text-[#22092C]">Milestone Task Checklist</p>
-                <p className="text-[11px] text-[#7A6B80]">Timeline milestones, due dates &amp; priorities</p>
+                <p className="text-xs font-bold text-primary">Milestone Task Checklist</p>
+                <p className="text-[11px] text-on-surface-variant">Timeline milestones, target dates, priorities &amp; categories</p>
               </div>
-              <Button size="sm" variant="outline" onClick={() => ExportService.exportTasksCSV(event)} className="gap-1.5 text-xs">
+              <button
+                onClick={() => ExportService.exportTasksCSV(event)}
+                className="px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm"
+              >
                 <Download className="h-3.5 w-3.5" />
-                <span>CSV</span>
-              </Button>
+                <span>Download CSV</span>
+              </button>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-[#FAF8F5] p-3 border border-[#E5D5B5]/60">
+            <div className="flex items-center justify-between rounded-xl bg-surface-container-low p-3.5 border border-primary-container/5">
               <div>
-                <p className="text-xs font-semibold text-[#22092C]">Vendor Quote Comparison</p>
-                <p className="text-[11px] text-[#7A6B80]">Quoted pricing, contact info &amp; ratings</p>
+                <p className="text-xs font-bold text-primary">Vendor Intelligence Directory</p>
+                <p className="text-[11px] text-on-surface-variant">Quoted pricing, locations, ratings &amp; contact coordinates</p>
               </div>
-              <Button size="sm" variant="outline" onClick={() => ExportService.exportVendorsCSV(event)} className="gap-1.5 text-xs">
+              <button
+                onClick={() => ExportService.exportVendorsCSV(event)}
+                className="px-3.5 py-1.5 rounded-full bg-primary-container text-on-primary text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm"
+              >
                 <Download className="h-3.5 w-3.5" />
-                <span>CSV</span>
-              </Button>
+                <span>Download CSV</span>
+              </button>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {/* Print & Shareable Dossier */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center space-x-2">
-              <Printer className="h-5 w-5 text-[#3B1242]" />
-              <CardTitle>Printable Dossier &amp; Sharing</CardTitle>
+        <div className="rounded-2xl bg-surface-container-lowest p-6 border border-primary-container/10 shadow-sm space-y-4">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center">
+              <Printer className="h-5 w-5 text-secondary-container" />
             </div>
-            <CardDescription>
-              Clean, printer-friendly PDF layout or shareable executive summary.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="rounded-2xl border border-[#E5D5B5]/70 bg-[#FAF8F5] p-4 space-y-2.5">
-              <h5 className="font-serif font-bold text-sm text-[#22092C]">Official Event Planning Dossier</h5>
-              <p className="text-xs text-[#5E4B66] leading-relaxed">
-                Generates a clean, typography-focused printable layout without browser navigation headers or background clutter. Perfect for family committee meetings and vendor consultations.
+            <div>
+              <h3 className="font-serif font-bold text-base text-primary">Printable Dossier &amp; Family Briefing</h3>
+              <p className="font-sans text-xs text-on-surface-variant">
+                Clean, printer-friendly PDF layout or shareable executive summary.
               </p>
-              <div className="pt-1 flex flex-wrap gap-2">
-                <Button size="sm" variant="primary" onClick={() => ExportService.printDossier()} className="gap-1.5 text-xs">
-                  <Printer className="h-3.5 w-3.5" />
-                  <span>Print / Save as PDF</span>
-                </Button>
-
-                <Button size="sm" variant="outline" onClick={handleCopySummary} className="gap-1.5 text-xs">
-                  {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
-                  <span>{copied ? "Copied!" : "Copy Summary"}</span>
-                </Button>
-              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <div className="rounded-xl border border-primary-container/10 bg-surface-container-low p-4 space-y-3">
+            <h5 className="font-serif font-bold text-sm text-primary">Official Event Planning Dossier</h5>
+            <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
+              Generates an editorial, typography-focused printable layout without browser navigation headers or background clutter. Tailored for family committee deliberations, vendor walkthroughs, and binder preservation.
+            </p>
+            <div className="pt-1 flex flex-wrap gap-2.5">
+              <button
+                onClick={() => ExportService.printDossier()}
+                className="px-4 py-2 rounded-full bg-primary-container text-on-primary text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-1.5 shadow-sm"
+              >
+                <Printer className="h-3.5 w-3.5 text-secondary-container" />
+                <span>Print / Save as PDF</span>
+              </button>
+
+              <button
+                onClick={handleCopySummary}
+                className="px-4 py-2 rounded-full bg-surface-container text-primary text-xs font-bold hover:bg-surface-container-high transition-colors flex items-center gap-1.5 border border-primary-container/10"
+              >
+                {copied ? <Check className="h-3.5 w-3.5 text-emerald-700" /> : <Copy className="h-3.5 w-3.5" />}
+                <span>{copied ? "Copied to Clipboard!" : "Copy Text Summary"}</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Event Administration & Reset Controls */}
-      <Card className="border-rose-200 bg-rose-50/40">
-        <CardHeader>
-          <CardTitle className="text-base text-rose-900">Event Administration</CardTitle>
-          <CardDescription className="text-xs text-rose-700">
-            Reset demo state for judges or manage persistent storage.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-0">
+      <div className="rounded-2xl border border-error/20 bg-surface-container-low/60 p-5 sm:p-6 space-y-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <p className="text-xs text-rose-800">
-              Storage Mode: <span className="font-semibold">Local Persistence (Browser Storage)</span>
-            </p>
-            <p className="text-[11px] text-rose-600">
-              Your edits are automatically saved locally. No cloud credentials required.
+            <h4 className="font-serif font-bold text-sm text-primary">Event Showcase &amp; Storage Controls</h4>
+            <p className="font-sans text-xs text-on-surface-variant mt-0.5">
+              Storage Mode: <span className="font-semibold text-primary">Local Persistence (Browser Storage)</span>. Edits auto-saved on-device.
             </p>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center gap-2">
             {event.isDemo && (
-              <Button size="sm" variant="outline" onClick={handleResetDemo} className="text-xs gap-1.5 border-rose-300 text-rose-800 hover:bg-rose-100">
+              <button
+                onClick={handleResetDemo}
+                className="px-4 py-1.5 rounded-full bg-surface-container text-primary border border-primary-container/15 text-xs font-bold hover:bg-surface-container-high transition-colors flex items-center gap-1.5"
+              >
                 <RotateCcw className="h-3.5 w-3.5" />
                 <span>Reset Demo Event</span>
-              </Button>
+              </button>
             )}
 
             {!event.isDemo && (
-              <Button size="sm" variant="danger" onClick={handleDeleteEvent} className="text-xs gap-1.5">
+              <button
+                onClick={handleDeleteEvent}
+                className="px-4 py-1.5 rounded-full bg-error/15 text-error text-xs font-bold hover:bg-error/25 transition-colors flex items-center gap-1.5"
+              >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>Delete Event</span>
-              </Button>
+              </button>
             )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
+

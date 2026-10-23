@@ -16,10 +16,6 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { EventPlan } from "@/types/event";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ProgressBar } from "@/components/ui/progress";
 import { formatINR, formatDate, getDaysRemaining } from "@/lib/utils";
 import { recalculateBudgetSummary } from "@/services/budgetEngine";
 import { calculateTaskMetrics } from "@/services/timelineEngine";
@@ -44,252 +40,335 @@ export function OverviewTab({ event, onNavigateTab }: OverviewTabProps) {
     .filter((t) => t.status !== "completed")
     .slice(0, 4);
 
-  return (
-    <div className="space-y-8 animate-in fade-in-50">
-      {/* Hero Event Banner */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#240B27] via-[#38123C] to-[#1E0724] p-6 sm:p-8 text-white shadow-xl">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge variant="gold" className="bg-[#D4AF37]/20 text-[#D4AF37] border-[#D4AF37]/40 capitalize">
-                {event.category.replace("_", " ")}
-              </Badge>
-              {event.isDemo && (
-                <Badge variant="rose" className="bg-[#D95B72]/20 text-[#F2C4CE] border-[#D95B72]/40">
-                  Judges Demo Showcase
-                </Badge>
-              )}
-              <span className="text-xs text-[#D9C3CE] flex items-center gap-1">
-                <MapPin className="h-3 w-3 text-[#C5A059]" /> {event.location.city}
-              </span>
-            </div>
+  // Safe buffer calculation
+  const safeBuffer = Math.max(0, event.budget.totalBudget - budgetSummary.totalEstimated);
 
-            <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white">
-              {event.title}
+  return (
+    <div className="space-y-6 animate-in fade-in-50">
+      {/* Stitch Warm Emotional Greeting Banner */}
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary-container via-tertiary-container to-primary text-on-primary p-5 sm:p-7 shadow-md">
+        <div className="absolute -top-12 -right-12 w-36 h-36 rounded-full bg-secondary-container/20 blur-2xl pointer-events-none" />
+        <div className="absolute -bottom-8 -left-8 w-28 h-28 rounded-full bg-tertiary-fixed-dim/15 blur-xl pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container-lowest/15 backdrop-blur-md text-secondary-fixed text-xs font-semibold uppercase tracking-wider">
+              <span className="material-symbols-outlined text-xs text-secondary-fixed">stars</span>
+              <span>Active Execution • {countdown.isPast ? "Celebrated" : `${countdown.days} Days to Go`}</span>
+            </span>
+            <span className="text-xs text-surface-container-high/80 font-medium">
+              {formatDate(event.eventDate)}
+            </span>
+          </div>
+
+          <div>
+            <h1 className="font-headline-sm sm:font-headline-md text-xl sm:text-2xl text-surface tracking-tight leading-snug">
+              Let’s make your celebration unforgettable.
             </h1>
-            <p className="text-sm text-[#D9C3CE] max-w-2xl leading-relaxed">
-              {event.aiOverview.executiveSummary}
+            <p className="font-body-sm text-xs sm:text-sm text-surface-variant/90 mt-1">
+              {event.title} • {event.location.city}
             </p>
           </div>
 
-          {/* Countdown Clock Widget */}
-          <div className="flex flex-col items-center justify-center rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 px-6 py-4 text-center shrink-0 min-w-[170px]">
-            <Clock className="h-5 w-5 text-[#D4AF37] mb-1" />
-            <span className="font-serif text-3xl font-extrabold text-white">
-              {countdown.isPast ? "Event Passed" : countdown.days}
+          {/* Quick Micro-tracker strip */}
+          <div className="pt-2.5 flex items-center justify-between gap-2 border-t border-surface-container-lowest/10 mt-1">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="material-symbols-outlined text-secondary-fixed text-base">verified</span>
+              <span className="font-label-sm text-xs text-surface-container-lowest truncate">
+                {taskMetrics.completed} of {taskMetrics.total} tasks finalized
+              </span>
+            </div>
+            <span className="font-label-sm text-xs text-secondary-fixed font-semibold">
+              {taskMetrics.completionRate}% Ready
             </span>
-            <span className="text-[11px] uppercase tracking-wider text-[#D9C3CE] font-semibold">
-              {countdown.isPast ? "Celebrated" : "Days to Celebration"}
-            </span>
-            <span className="text-[10px] text-[#C5A059] mt-0.5">{formatDate(event.eventDate)}</span>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Primary KPI Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-        {/* Total Budget */}
-        <Card className="hover:border-[#C5A059] transition-all">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider text-[#5E4B66]">
-              <span>Total Budget</span>
-              <DollarSign className="h-4 w-4 text-[#C5A059]" />
+      {/* 4 Primary Metric Cards: 2x2 Bento Grid */}
+      <section aria-label="Key Event Metrics" className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        {/* Card 1: Total Budget */}
+        <div className="bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-primary-container/8 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="font-label-sm text-xs uppercase tracking-wide">Total Budget</span>
+            <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary-container">
+              <span className="material-symbols-outlined text-base">account_balance_wallet</span>
             </div>
-            <CardTitle className="text-2xl font-bold text-[#3B1242]">
+          </div>
+          <div className="mt-2">
+            <span className="font-headline-sm text-xl text-primary font-bold tracking-tight">
               {formatINR(event.budget.totalBudget)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs text-[#7A6B80] flex justify-between">
-              <span>Emergency Reserve:</span>
-              <span className="font-semibold text-[#B33951]">{formatINR(event.budget.emergencyReserveAmount)}</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Estimated / Committed Spending */}
-        <Card className="hover:border-[#C5A059] transition-all">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider text-[#5E4B66]">
-              <span>Projected Spend</span>
-              <TrendingUp className="h-4 w-4 text-[#D95B72]" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-[#22092C]">
-              {formatINR(budgetSummary.totalEstimated)}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-[#5E4B66]">Utilization:</span>
-              <span className={`font-semibold ${budgetSummary.isOverBudget ? "text-rose-600" : "text-emerald-700"}`}>
-                {budgetSummary.budgetUtilizationPct}%
-              </span>
-            </div>
-            <ProgressBar
-              value={budgetSummary.budgetUtilizationPct}
-              variant={budgetSummary.isOverBudget ? "rose" : "plum"}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Task Completion Progress */}
-        <Card className="hover:border-[#C5A059] transition-all">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider text-[#5E4B66]">
-              <span>Milestone Progress</span>
-              <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-[#22092C]">
-              {taskMetrics.completed} / {taskMetrics.total}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex justify-between text-xs mb-1">
-              <span className="text-[#5E4B66]">Completed:</span>
-              <span className="font-semibold text-emerald-700">{taskMetrics.completionRate}%</span>
-            </div>
-            <ProgressBar value={taskMetrics.completionRate} variant="emerald" />
-          </CardContent>
-        </Card>
-
-        {/* Guest Count & Per-Guest Rate */}
-        <Card className="hover:border-[#C5A059] transition-all">
-          <CardHeader className="pb-2">
-            <div className="flex justify-between items-center text-xs font-semibold uppercase tracking-wider text-[#5E4B66]">
-              <span>Guest Headcount</span>
-              <Users className="h-4 w-4 text-[#543C78]" />
-            </div>
-            <CardTitle className="text-2xl font-bold text-[#22092C]">
-              {event.guests.expectedCount} <span className="text-sm font-normal text-[#5E4B66]">attendees</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs text-[#7A6B80] flex justify-between">
-              <span>Per Guest Allocation:</span>
-              <span className="font-semibold text-[#22092C]">
-                {formatINR(Math.round(event.budget.totalBudget / Math.max(1, event.guests.expectedCount)))}
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Middle Grid: Cultural Highlights & Actionable Task Radar */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        {/* Left Column: Theme & Cultural Blueprint (7 cols) */}
-        <div className="lg:col-span-7 space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
-                  <Sparkles className="h-5 w-5 text-[#C5A059]" />
-                  <span>Atmosphere, Theme &amp; Culture</span>
-                </CardTitle>
-                <Badge variant="plum">{event.preferences.culturalRegion}</Badge>
-              </div>
-              <CardDescription>
-                Curated visual styling, color palette, and ritual recommendations.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="rounded-2xl bg-[#FAF8F5] p-4 border border-[#E5D5B5]/60 space-y-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-[#8C6D23]">Styling Concept</p>
-                <p className="text-sm text-[#22092C] leading-relaxed">{event.aiOverview.themeConcept}</p>
-              </div>
-
-              {/* Color Palette Chips */}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-2">Palette Accents</p>
-                <div className="flex flex-wrap gap-2">
-                  {event.preferences.preferredColors.map((color) => (
-                    <Badge key={color} variant="rose" className="text-xs py-1 px-3">
-                      {color}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-
-              {/* Cultural Highlights List */}
-              {event.aiOverview.culturalHighlights && event.aiOverview.culturalHighlights.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-2">
-                    Key Ceremonial Traditions
-                  </p>
-                  <ul className="space-y-1.5">
-                    {event.aiOverview.culturalHighlights.map((highlight, idx) => (
-                      <li key={idx} className="flex items-start text-xs text-[#22092C] space-x-2">
-                        <Check className="h-3.5 w-3.5 text-[#C5A059] shrink-0 mt-0.5" />
-                        <span>{highlight}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+            </span>
+            <p className="font-label-sm text-[11px] text-on-surface-variant/80 mt-0.5">Target Allocation Cap</p>
+          </div>
         </div>
 
-        {/* Right Column: Upcoming Priorities & Quick Actions (5 cols) */}
-        <div className="lg:col-span-5 space-y-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <div>
-                <CardTitle>Upcoming Deadlines</CardTitle>
-                <CardDescription>Tasks requiring immediate attention</CardDescription>
+        {/* Card 2: Estimated Expenses */}
+        <div className="bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-primary-container/8 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="font-label-sm text-xs uppercase tracking-wide">Committed + Est</span>
+            <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary">
+              <span className="material-symbols-outlined text-base">receipt_long</span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <span className="font-headline-sm text-xl text-on-surface font-bold tracking-tight">
+              {formatINR(budgetSummary.totalEstimated)}
+            </span>
+            <p className="font-label-sm text-[11px] text-on-surface-variant/80 mt-0.5">
+              {budgetSummary.budgetUtilizationPct}% Total Utilization
+            </p>
+          </div>
+        </div>
+
+        {/* Card 3: Safe Buffer */}
+        <div className="bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-primary-container/8 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="font-label-sm text-xs uppercase tracking-wide">Safe Buffer</span>
+            <div className="w-8 h-8 rounded-full bg-secondary-container/40 flex items-center justify-center text-on-secondary-container">
+              <span className="material-symbols-outlined text-base">savings</span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <span className="font-headline-sm text-xl text-secondary font-bold tracking-tight">
+              {formatINR(safeBuffer)}
+            </span>
+            <p className="font-label-sm text-[11px] text-on-surface-variant/80 mt-0.5">
+              Reserve: {formatINR(event.budget.emergencyReserveAmount)}
+            </p>
+          </div>
+        </div>
+
+        {/* Card 4: Roadmap Progress */}
+        <div className="bg-surface-container-lowest rounded-xl p-4 shadow-xs border border-primary-container/8 flex flex-col justify-between">
+          <div className="flex items-center justify-between text-on-surface-variant">
+            <span className="font-label-sm text-xs uppercase tracking-wide">Roadmap</span>
+            <div className="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center text-primary">
+              <span className="material-symbols-outlined text-base">task_alt</span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <div className="flex items-baseline gap-1">
+              <span className="font-headline-sm text-xl text-primary font-bold">{taskMetrics.completionRate}%</span>
+              <span className="font-label-sm text-[11px] text-on-surface-variant">complete</span>
+            </div>
+            <div className="w-full bg-surface-container-high rounded-full h-1.5 mt-1.5 overflow-hidden">
+              <div
+                className="bg-primary-container h-1.5 rounded-full transition-all duration-300"
+                style={{ width: `${taskMetrics.completionRate}%` }}
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Middle Grid: Budget Donut Card & Immediate Tasks */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Budget Distribution Donut Card (7 cols) */}
+        <section className="lg:col-span-7 bg-surface-container-lowest rounded-xl p-5 shadow-xs border border-primary-container/8 flex flex-col justify-between">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h2 className="font-headline-sm text-lg text-primary-container font-semibold">Budget Distribution</h2>
+              <p className="font-body-sm text-xs text-on-surface-variant">
+                Calculated against allocated {formatINR(event.budget.totalBudget)}
+              </p>
+            </div>
+            <span className="inline-flex items-center gap-1.5 bg-surface-container px-2.5 py-1 rounded-full text-secondary font-label-sm text-xs font-semibold">
+              <span className="w-2 h-2 rounded-full bg-secondary" />
+              <span>{formatINR(safeBuffer)} Surplus</span>
+            </span>
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center gap-6 pt-2">
+            {/* Donut Visual SVG Chart */}
+            <div className="relative w-36 h-36 shrink-0 flex items-center justify-center">
+              <svg aria-label="Budget breakdown" className="w-full h-full -rotate-90 transform" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" fill="transparent" r="38" stroke="#35213d" strokeDasharray="83.5 155.5" strokeDashoffset="0" strokeWidth="14" />
+                <circle cx="50" cy="50" fill="transparent" r="38" stroke="#745a2a" strokeDasharray="71.6 167.4" strokeDashoffset="-83.5" strokeWidth="14" />
+                <circle cx="50" cy="50" fill="transparent" r="38" stroke="#dabde1" strokeDasharray="28.6 210.4" strokeDashoffset="-155.1" strokeWidth="14" />
+                <circle cx="50" cy="50" fill="transparent" r="38" stroke="#ffdb9f" strokeDasharray="23.8 215.2" strokeDashoffset="-183.7" strokeWidth="14" />
+                <circle cx="50" cy="50" fill="transparent" r="38" stroke="#481926" strokeDasharray="14.3 224.7" strokeDashoffset="-207.5" strokeWidth="14" />
+                <circle cx="50" cy="50" fill="transparent" r="38" stroke="#cdc4cc" strokeDasharray="16.7 222.3" strokeDashoffset="-221.8" strokeWidth="14" />
+              </svg>
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                <span className="font-headline-sm text-base text-primary font-bold leading-tight">
+                  ₹{(event.budget.totalBudget / 100000).toFixed(1)}L
+                </span>
+                <span className="font-label-sm text-[10px] text-on-surface-variant uppercase tracking-wider">Total</span>
               </div>
-              <Button variant="ghost" size="sm" onClick={() => onNavigateTab("tasks")} className="text-xs">
-                View All
-              </Button>
-            </CardHeader>
-            <CardContent className="space-y-3">
+            </div>
+
+            {/* Segment Breakdown List */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2.5 w-full">
+              {event.budget.categories.slice(0, 6).map((cat, idx) => {
+                const colors = [
+                  "bg-primary-container",
+                  "bg-secondary",
+                  "bg-primary-fixed-dim",
+                  "bg-secondary-container",
+                  "bg-tertiary-container",
+                  "bg-outline-variant",
+                ];
+                return (
+                  <div key={cat.id} className="flex items-center gap-2">
+                    <span className={`w-2.5 h-2.5 rounded-full ${colors[idx % colors.length]} shrink-0`} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between text-xs font-label-md">
+                        <span className="text-on-surface truncate">{cat.name}</span>
+                        <span className="text-on-surface-variant ml-1 font-semibold">{cat.percentage}%</span>
+                      </div>
+                      <p className="font-body-sm text-[11px] text-on-surface-variant leading-none mt-0.5">
+                        {formatINR(cat.allocatedAmount)}
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="pt-4 border-t border-primary-container/8 mt-4 flex items-center justify-between">
+            <span className="font-label-sm text-xs text-on-surface-variant">
+              Emergency Reserve: <strong className="text-secondary">{formatINR(event.budget.emergencyReserveAmount)}</strong>
+            </span>
+            <button
+              onClick={() => onNavigateTab("budget")}
+              className="font-label-sm text-xs text-secondary hover:text-primary font-semibold flex items-center gap-1 cursor-pointer"
+            >
+              <span>Manage Expenses</span>
+              <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </section>
+
+        {/* Right Column: Immediate Priority Tasks (5 cols) */}
+        <section className="lg:col-span-5 bg-surface-container-lowest rounded-xl p-5 shadow-xs border border-primary-container/8 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="font-headline-sm text-lg text-primary font-semibold">Immediate Tasks</h2>
+                <p className="font-body-sm text-xs text-on-surface-variant">
+                  {upcomingTasks.length} items requiring decisions
+                </p>
+              </div>
+              <button
+                onClick={() => onNavigateTab("tasks")}
+                className="font-label-sm text-xs text-secondary hover:text-primary font-semibold flex items-center gap-0.5 cursor-pointer"
+              >
+                <span>View All ({taskMetrics.total})</span>
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </button>
+            </div>
+
+            <div className="space-y-2.5">
               {upcomingTasks.length === 0 ? (
-                <div className="text-center py-6 text-xs text-[#7A6B80]">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-600 mx-auto mb-2" />
+                <div className="text-center py-8 text-xs text-on-surface-variant">
+                  <CheckCircle2 className="h-8 w-8 text-secondary mx-auto mb-2" />
                   <p>All upcoming milestones are completed!</p>
                 </div>
               ) : (
                 upcomingTasks.map((t) => (
                   <div
                     key={t.id}
-                    className="flex items-start justify-between rounded-xl border border-[#FAF0F3] bg-[#FAF8F5] p-3 hover:border-[#E5D5B5] transition-colors"
+                    className="flex items-start gap-3 p-3 rounded-xl bg-surface-container-low border border-primary-container/5 transition-all"
                   >
-                    <div className="space-y-1 pr-2">
-                      <p className="text-xs font-semibold text-[#22092C] leading-snug">{t.title}</p>
-                      <p className="text-[11px] text-[#7A6B80]">Due: {formatDate(t.dueDate)}</p>
+                    <div className="w-4 h-4 rounded mt-0.5 border border-primary-container/30 flex items-center justify-center shrink-0">
+                      {t.status === "completed" && <span className="w-2 h-2 rounded-xs bg-primary-container" />}
                     </div>
-                    <Badge
-                      variant={
-                        t.priority === "critical" ? "danger" : t.priority === "high" ? "warning" : "default"
-                      }
-                      className="text-[9px] uppercase shrink-0"
-                    >
-                      {t.priority}
-                    </Badge>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <h3 className="font-title-md text-xs text-on-surface font-semibold leading-tight truncate">
+                          {t.title}
+                        </h3>
+                        <span
+                          className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-semibold shrink-0 ${
+                            t.priority === "critical"
+                              ? "bg-error-container text-on-error-container"
+                              : t.priority === "high"
+                              ? "bg-secondary-container text-on-secondary-container"
+                              : "bg-surface-container-high text-on-surface-variant"
+                          }`}
+                        >
+                          {t.priority}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-1 text-[11px] text-on-surface-variant">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 text-secondary" /> Due: {formatDate(t.dueDate)}
+                        </span>
+                        <span>•</span>
+                        <span className="text-secondary font-medium truncate">{t.relatedCategory || "Milestone"}</span>
+                      </div>
+                    </div>
                   </div>
                 ))
               )}
+            </div>
+          </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onNavigateTab("assistant")}
-                className="w-full gap-2 mt-2 text-xs border-[#E5D5B5]"
-              >
-                <Sparkles className="h-3.5 w-3.5 text-[#C5A059]" />
-                <span>Ask AI Assistant for Planning Guidance</span>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+          <button
+            onClick={() => onNavigateTab("assistant")}
+            className="w-full mt-4 py-2.5 px-3 rounded-xl bg-surface-container text-primary hover:bg-surface-container-high font-label-md text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-secondary text-base">auto_awesome</span>
+            <span>Ask AI Co-Planner for Guidance</span>
+          </button>
+        </section>
       </div>
-    </div>
-  );
-}
 
-function Check({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-    </svg>
+      {/* Cultural Highlights & Atmosphere Concept */}
+      <section className="bg-surface-container-lowest rounded-xl p-5 shadow-xs border border-primary-container/8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-primary-container/8 pb-3">
+          <div>
+            <h2 className="font-headline-sm text-lg text-primary font-semibold flex items-center gap-2">
+              <span className="material-symbols-outlined text-secondary text-lg">palette</span>
+              <span>Atmosphere, Theme &amp; Culture</span>
+            </h2>
+            <p className="font-body-sm text-xs text-on-surface-variant">
+              Curated visual styling, color palette, and ceremonial nuances.
+            </p>
+          </div>
+          <span className="self-start sm:self-auto px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label-sm text-xs font-semibold">
+            {event.preferences.culturalRegion}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+          <div className="bg-surface-container-low p-4 rounded-xl flex flex-col gap-1.5 md:col-span-2">
+            <span className="font-label-sm text-xs uppercase tracking-wider text-secondary font-bold">
+              Styling Concept
+            </span>
+            <p className="font-body-md text-xs sm:text-sm text-on-surface leading-relaxed">
+              {event.aiOverview.themeConcept}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <span className="font-label-sm text-xs uppercase tracking-wider text-secondary font-bold">
+              Palette Accents
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {event.preferences.preferredColors.map((color) => (
+                <span
+                  key={color}
+                  className="font-label-sm text-xs px-2.5 py-1 rounded-full bg-surface-container text-primary font-medium"
+                >
+                  {color}
+                </span>
+              ))}
+            </div>
+
+            <div className="pt-2">
+              <span className="font-label-sm text-xs uppercase tracking-wider text-secondary font-bold">
+                Guest Headcount
+              </span>
+              <p className="font-headline-sm text-base text-primary font-bold">
+                {event.guests.expectedCount} attendees (~{formatINR(Math.round(event.budget.totalBudget / Math.max(1, event.guests.expectedCount)))} / guest)
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

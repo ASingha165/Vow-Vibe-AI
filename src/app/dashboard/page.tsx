@@ -90,41 +90,44 @@ function DashboardContent() {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF8F5]">
+    <div className="min-h-screen flex flex-col bg-surface font-sans text-on-surface">
       <Navbar />
 
       {/* Main Dashboard Container */}
       <main className="flex-1 max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Breadcrumb & Sub-Nav Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#E5D5B5]/60 pb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-primary-container/10 pb-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold uppercase tracking-wider text-[#7A6B80]">Event Dashboard</span>
-              <span className="text-[#C5A059]">•</span>
-              <Badge variant="plum" className="capitalize text-[10px]">
+              <span className="font-label-sm text-xs font-semibold uppercase tracking-wider text-secondary">
+                Event Dashboard
+              </span>
+              <span className="text-secondary">•</span>
+              <span className="font-label-sm text-[10px] px-2 py-0.5 rounded-full bg-surface-container text-primary-container capitalize font-semibold">
                 {event.category.replace("_", " ")}
-              </Badge>
+              </span>
               {event.isDemo && (
-                <Badge variant="rose" className="text-[10px]">
+                <span className="font-label-sm text-[10px] px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-bold">
                   Judges Demo Data
-                </Badge>
+                </span>
               )}
             </div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-extrabold text-[#22092C] tracking-tight">
+            <h1 className="font-headline-sm sm:font-headline-md text-2xl sm:text-3xl font-bold text-primary tracking-tight">
               {event.title}
             </h1>
           </div>
 
           <div className="flex items-center space-x-2">
-            <Badge variant="gold" className="text-xs py-1 px-3 hidden sm:inline-flex">
-              {countdown.text} ({formatDate(event.eventDate)})
-            </Badge>
+            <span className="font-label-sm text-xs py-1 px-3 rounded-full bg-secondary-container/60 text-on-secondary-container font-semibold hidden sm:inline-flex items-center gap-1.5 shadow-xs">
+              <Clock className="h-3.5 w-3.5 text-secondary" />
+              <span>{countdown.text} ({formatDate(event.eventDate)})</span>
+            </span>
 
             <Button
               onClick={() => router.push("/plan")}
               variant="outline"
               size="sm"
-              className="text-xs border-[#E5D5B5]"
+              className="text-xs border-primary-container/20 rounded-xl"
             >
               <span>+ New Event</span>
             </Button>
@@ -132,7 +135,7 @@ function DashboardContent() {
         </div>
 
         {/* Tab Navigation Pill Bar */}
-        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 scrollbar-none no-print">
+        <div className="flex items-center space-x-1.5 overflow-x-auto pb-1 no-scrollbar no-print">
           {TABS.map((tab) => {
             const Icon = tab.icon;
             const isActive = activeTab === tab.id;
@@ -142,11 +145,11 @@ function DashboardContent() {
                 onClick={() => setActiveTab(tab.id as TabId)}
                 className={`flex items-center space-x-2 px-3.5 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                   isActive
-                    ? "bg-[#3B1242] text-white shadow-sm"
-                    : "bg-white text-[#5E4B66] border border-[#E5D5B5]/60 hover:bg-[#FAF8F5] hover:text-[#22092C]"
+                    ? "bg-primary-container text-surface shadow-sm"
+                    : "bg-surface-container-high text-on-surface-variant hover:text-primary-container hover:bg-surface-container"
                 }`}
               >
-                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-[#D4AF37]" : "text-[#7A6B80]"}`} />
+                <Icon className={`h-3.5 w-3.5 ${isActive ? "text-secondary-container" : "text-secondary"}`} />
                 <span>{tab.label}</span>
               </button>
             );

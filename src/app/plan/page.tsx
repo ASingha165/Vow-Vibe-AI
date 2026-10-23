@@ -18,14 +18,12 @@ import {
   Check,
   Edit2,
   RefreshCw,
+  Bookmark,
+  HelpCircle,
+  ChevronDown,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Input, Textarea } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { ProgressBar } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/toast";
 import { EventCategory, EventWizardInput, VenueType, FormalityLevel, PlanningStage, DiyLevel } from "@/types/event";
 import { formatINR } from "@/lib/utils";
@@ -63,6 +61,45 @@ const CULTURAL_REGIONS = [
   "Multicultural Fusion",
 ];
 
+const CELEBRATION_TYPES = [
+  {
+    type: "wedding" as EventCategory,
+    title: "Wedding",
+    subtitle: "Multiday / Traditional",
+    icon: "favorite",
+  },
+  {
+    type: "birthday" as EventCategory,
+    title: "Birthday",
+    subtitle: "Milestone soirée",
+    icon: "cake",
+  },
+  {
+    type: "anniversary" as EventCategory,
+    title: "Anniversary",
+    subtitle: "Jubilee & renewal",
+    icon: "wine_bar",
+  },
+  {
+    type: "community" as EventCategory,
+    title: "Community",
+    subtitle: "Utsav & gathering",
+    icon: "groups",
+  },
+  {
+    type: "college_fest" as EventCategory,
+    title: "College Fest",
+    subtitle: "Cultural summit",
+    icon: "celebration",
+  },
+  {
+    type: "other" as EventCategory,
+    title: "Other",
+    subtitle: "Custom occasion",
+    icon: "auto_awesome",
+  },
+];
+
 export default function EventWizardPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -70,33 +107,34 @@ export default function EventWizardPage() {
   const [step, setStep] = React.useState<number>(1);
   const [isGenerating, setIsGenerating] = React.useState<boolean>(false);
   const [generationPhase, setGenerationPhase] = React.useState<string>("");
+  const [expandedAccordion, setExpandedAccordion] = React.useState<number | null>(null);
 
   // Form State with Initial Defaults
   const [formData, setFormData] = React.useState<EventWizardInput>({
-    title: "",
+    title: "Bengali Wedding Celebration - Ananya & Rohan",
     category: "wedding",
-    eventDate: "",
+    eventDate: "2025-12-12",
     isTentativeDate: false,
-    city: "Kolkata",
+    city: "Kolkata, West Bengal",
     venueType: "indoor",
     totalBudget: 800000,
     currency: "INR",
-    expectedGuestCount: 250,
+    expectedGuestCount: 300,
     budgetFlexibility: "moderate",
     emergencyReservePct: 10,
-    theme: "Heritage Elegance with Warm Lighting",
+    theme: "Heritage Rajbari Elegance with Ambient Amber Lighting",
     preferredColors: ["Crimson Red", "Champagne Gold", "Warm Ivory"],
     culturalRegion: "Bengali (Kolkata Tradition)",
     foodPreferences: ["Authentic Regional Feast", "Live Street Chaat Counter"],
     formality: "traditional_royal",
-    accessibilityRequirements: "",
-    mustHaves: ["Auspicious Lagna Rituals", "Dedicated Photography Crew"],
-    thingsToAvoid: ["Loud commercial music during rituals"],
+    accessibilityRequirements: "Ground floor access & wheelchair ramps",
+    mustHaves: ["Auspicious Shehnai Ensemble", "Floral Rajnigandha Mandap", "Candid Photojournalism Duo"],
+    thingsToAvoid: ["Loud commercial DJ music during Saat Paake Ghaura"],
     planningStage: "just_started",
     diyLevel: "hybrid",
     priorityCategories: ["Catering & Beverages", "Venue & Lawns"],
-    sustainabilityPreferences: "Sal leaf plates and donation of surplus meal boxes",
-    specialRequirements: "",
+    sustainabilityPreferences: "Sal leaf plates and donation of surplus meal boxes to local shelter",
+    specialRequirements: "Authentic Gaye Holud brass urli setup with fresh marigold strings",
   });
 
   // Load draft from localStorage on mount
@@ -104,13 +142,8 @@ export default function EventWizardPage() {
     const draft = StorageService.getWizardDraft<EventWizardInput>();
     if (draft && draft.title) {
       setFormData(draft);
-      toast({
-        type: "info",
-        title: "Draft Restored",
-        message: `Loaded your in-progress plan for "${draft.title}".`,
-      });
     }
-  }, [toast]);
+  }, []);
 
   // Save draft whenever formData changes
   React.useEffect(() => {
@@ -123,7 +156,10 @@ export default function EventWizardPage() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const toggleArrayItem = (field: "preferredColors" | "foodPreferences" | "mustHaves" | "thingsToAvoid", item: string) => {
+  const toggleArrayItem = (
+    field: "preferredColors" | "foodPreferences" | "mustHaves" | "thingsToAvoid",
+    item: string
+  ) => {
     setFormData((prev) => {
       const list = prev[field] || [];
       if (list.includes(item)) {
@@ -131,6 +167,15 @@ export default function EventWizardPage() {
       } else {
         return { ...prev, [field]: [...list, item] };
       }
+    });
+  };
+
+  const handleManualSaveDraft = () => {
+    StorageService.saveWizardDraft(formData);
+    toast({
+      type: "success",
+      title: "Draft Saved",
+      message: `Your draft for "${formData.title || "Celebration"}" has been persisted.`,
     });
   };
 
@@ -170,13 +215,13 @@ export default function EventWizardPage() {
   const handleNext = () => {
     if (validateStep(step)) {
       setStep((prev) => Math.min(5, prev + 1));
-      window.scrollTo({ top: 120, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   const handleBack = () => {
     setStep((prev) => Math.max(1, prev - 1));
-    window.scrollTo({ top: 120, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Submit and Generate Plan via API
@@ -224,356 +269,531 @@ export default function EventWizardPage() {
     }
   };
 
-  const progressPercent = Math.round((step / 5) * 100);
-
   return (
-    <div className="min-h-screen flex flex-col bg-[#FAF8F5]">
+    <div className="min-h-screen flex flex-col bg-surface font-sans text-on-surface">
       <Navbar />
 
-      <main className="flex-1 py-10 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto w-full">
-        {/* Wizard Header */}
-        <div className="mb-8 text-center sm:text-left">
-          <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#C5A059]">
-              Step {step} of 5 • {step === 1 && "Event Basics"}
-              {step === 2 && "Budget & Guests"}
-              {step === 3 && "Theme & Cultural Preferences"}
-              {step === 4 && "Planning Preferences"}
-              {step === 5 && "Review & Synthesize"}
-            </span>
-            <span className="text-xs font-semibold text-[#5E4B66]">{progressPercent}% Completed</span>
-          </div>
-          <ProgressBar value={progressPercent} variant="plum" />
-        </div>
+      <main className="flex-1 flex flex-col relative w-full bg-surface pb-32">
+        <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6 flex flex-col gap-5">
+          {/* Top Progress & Header Bar */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="font-label-sm text-xs text-secondary uppercase tracking-widest font-semibold">
+                  Step {step} of 5
+                </span>
+                <span className="w-1 h-1 rounded-full bg-outline-variant" />
+                <span className="font-label-sm text-xs text-on-surface-variant font-medium">
+                  {step === 1 && "Event Basics"}
+                  {step === 2 && "Budget & Guests"}
+                  {step === 3 && "Theme & Traditions"}
+                  {step === 4 && "Planning Guardrails"}
+                  {step === 5 && "Review & Synthesis"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleManualSaveDraft}
+                className="flex items-center gap-1 font-label-md text-xs text-secondary hover:text-primary transition-colors py-1 px-2.5 rounded-lg bg-surface-container-low cursor-pointer"
+              >
+                <Bookmark className="h-3 w-3" />
+                <span>Save Draft</span>
+              </button>
+            </div>
 
-        {/* Wizard Step Cards */}
-        <Card className="border border-[#E5D5B5] shadow-lg p-6 sm:p-8 rounded-3xl bg-white relative">
+            {/* Stepper Indicator Dots */}
+            <div className="flex items-center gap-2 pt-1">
+              {[1, 2, 3, 4, 5].map((s) => (
+                <div
+                  key={s}
+                  className={`h-1.5 flex-1 rounded-full transition-all ${
+                    s <= step ? "bg-primary-container" : "bg-surface-variant"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
           {/* STEP 1: EVENT BASICS */}
           {step === 1 && (
-            <div className="space-y-6 animate-in fade-in-50">
-              <div className="border-b border-[#FAF0F3] pb-4">
-                <h2 className="font-serif text-2xl font-bold text-[#22092C]">Tell us about your celebration</h2>
-                <p className="mt-1 text-sm text-[#5E4B66]">Start with the foundational details of the event.</p>
-              </div>
-
-              <div className="space-y-4">
-                <Input
-                  label="Event Name *"
-                  placeholder="e.g., A Royal Bengali Wedding: Sourav & Debolina"
-                  value={formData.title}
-                  onChange={(e) => updateField("title", e.target.value)}
-                />
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                      Event Category *
-                    </label>
-                    <select
-                      value={formData.category}
-                      onChange={(e) => updateField("category", e.target.value as EventCategory)}
-                      className="flex h-11 w-full rounded-xl border border-[#E5D5B5] bg-white px-3.5 py-2 text-sm text-[#22092C] focus:border-[#3B1242] focus:outline-none focus:ring-2 focus:ring-[#3B1242]/20"
-                    >
-                      <option value="wedding">Wedding Celebration</option>
-                      <option value="birthday">Milestone Birthday</option>
-                      <option value="anniversary">Anniversary Celebration</option>
-                      <option value="college_fest">College Festival</option>
-                      <option value="community">Community Gathering / Puja</option>
-                      <option value="corporate">Corporate Gala / Meet</option>
-                      <option value="other">Other Celebration</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <Input
-                      label="City & Location *"
-                      placeholder="e.g., Kolkata, West Bengal"
-                      value={formData.city}
-                      onChange={(e) => updateField("city", e.target.value)}
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-                  <div>
-                    <Input
-                      label="Event Date"
-                      type="date"
-                      value={formData.eventDate}
-                      disabled={formData.isTentativeDate}
-                      onChange={(e) => updateField("eventDate", e.target.value)}
-                      helperText={formData.isTentativeDate ? "Date is marked tentative" : "Select target date"}
-                    />
-                  </div>
-
-                  <div className="pt-5 flex items-center space-x-2.5">
-                    <input
-                      type="checkbox"
-                      id="tentativeDate"
-                      checked={formData.isTentativeDate}
-                      onChange={(e) => updateField("isTentativeDate", e.target.checked)}
-                      className="h-4 w-4 rounded accent-[#3B1242] cursor-pointer"
-                    />
-                    <label htmlFor="tentativeDate" className="text-sm font-medium text-[#22092C] cursor-pointer">
-                      Date is tentative / not yet locked
-                    </label>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                    Venue Setting
-                  </label>
-                  <div className="grid grid-cols-3 gap-3">
-                    {(["indoor", "outdoor", "undecided"] as VenueType[]).map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => updateField("venueType", v)}
-                        className={`py-2.5 px-3 rounded-xl border text-xs font-semibold capitalize transition-all cursor-pointer ${
-                          formData.venueType === v
-                            ? "bg-[#3B1242] text-white border-[#3B1242] shadow-sm"
-                            : "bg-white text-[#5E4B66] border-[#E5D5B5] hover:bg-[#FAF8F5]"
-                        }`}
-                      >
-                        {v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* STEP 2: BUDGET & ATTENDANCE */}
-          {step === 2 && (
-            <div className="space-y-6 animate-in fade-in-50">
-              <div className="border-b border-[#FAF0F3] pb-4">
-                <h2 className="font-serif text-2xl font-bold text-[#22092C]">Budget &amp; Attendance</h2>
-                <p className="mt-1 text-sm text-[#5E4B66]">
-                  Set realistic financial boundaries. Our engine allocates amounts with deterministic precision.
+            <div className="flex flex-col gap-5 animate-in fade-in-50">
+              {/* Editorial Headline */}
+              <div className="pt-1">
+                <h1 className="font-headline-lg-mobile sm:font-headline-lg text-primary tracking-tight">
+                  Let’s shape your milestone.
+                </h1>
+                <p className="font-body-md text-sm text-on-surface-variant mt-1">
+                  Begin crafting your bespoke itinerary and intelligent vendor blueprint.
                 </p>
               </div>
 
-              <div className="space-y-5">
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66]">
-                      Total Budget (INR) *
-                    </label>
-                    <span className="font-bold text-lg text-[#3B1242]">{formatINR(formData.totalBudget)}</span>
-                  </div>
+              {/* Field 1: Event Title */}
+              <div className="flex flex-col gap-1.5">
+                <label className="font-title-md text-sm text-primary flex items-center justify-between">
+                  <span>Celebration Name</span>
+                  <span className="font-label-sm text-[10px] text-secondary-fixed-dim bg-primary-container px-2 py-0.5 rounded-full tracking-wide">
+                    REQUIRED
+                  </span>
+                </label>
+                <div className="relative bg-surface-container-lowest rounded-xl shadow-xs border border-primary-container/10 p-1">
                   <input
-                    type="range"
-                    min={50000}
-                    max={5000000}
-                    step={25000}
-                    value={formData.totalBudget}
-                    onChange={(e) => updateField("totalBudget", Number(e.target.value))}
-                    className="w-full accent-[#3B1242] cursor-pointer mb-2"
+                    type="text"
+                    value={formData.title}
+                    onChange={(e) => updateField("title", e.target.value)}
+                    placeholder="e.g., Ananya & Rohan's Vivaha"
+                    className="w-full bg-transparent px-3 py-2 font-body-lg text-sm text-primary focus:outline-none placeholder:text-outline"
                   />
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs text-[#7A6B80]">Or enter exact amount:</span>
-                    <input
-                      type="number"
-                      min={5000}
-                      value={formData.totalBudget}
-                      onChange={(e) => updateField("totalBudget", Number(e.target.value))}
-                      className="w-36 rounded-lg border border-[#E5D5B5] px-2.5 py-1 text-xs font-semibold text-[#22092C]"
-                    />
+                </div>
+              </div>
+
+              {/* Field 2: Event Type Matrix */}
+              <div className="flex flex-col gap-2">
+                <div className="flex items-baseline justify-between">
+                  <label className="font-title-md text-sm text-primary font-semibold">Celebration Type</label>
+                  <span className="font-label-sm text-xs text-on-surface-variant">Select format</span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+                  {CELEBRATION_TYPES.map((cat) => {
+                    const isSelected = formData.category === cat.type;
+                    return (
+                      <button
+                        key={cat.type}
+                        type="button"
+                        onClick={() => updateField("category", cat.type)}
+                        className={`text-left p-3.5 rounded-xl flex items-start justify-between shadow-xs transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-primary-container text-on-primary shadow-md"
+                            : "bg-surface-container-lowest text-on-surface hover:bg-surface-container border border-primary-container/8"
+                        }`}
+                      >
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={`material-symbols-outlined text-lg ${
+                              isSelected ? "text-secondary-container" : "text-secondary"
+                            }`}
+                          >
+                            {cat.icon}
+                          </span>
+                          <span
+                            className={`font-title-md text-sm font-semibold ${
+                              isSelected ? "text-surface-container-lowest" : "text-primary"
+                            }`}
+                          >
+                            {cat.title}
+                          </span>
+                          <span
+                            className={`font-label-sm text-[11px] ${
+                              isSelected ? "text-primary-fixed-dim" : "text-on-surface-variant"
+                            }`}
+                          >
+                            {cat.subtitle}
+                          </span>
+                        </div>
+                        {isSelected ? (
+                          <span className="material-symbols-outlined text-secondary-fixed text-lg">check_circle</span>
+                        ) : (
+                          <span className="w-3.5 h-3.5 rounded-full bg-surface-variant shrink-0 mt-1" />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Field 3: Date & Flexibility */}
+              <div className="flex flex-col gap-2">
+                <label className="font-title-md text-sm text-primary font-semibold">Target Date</label>
+                <div className="bg-surface-container-lowest p-3.5 rounded-xl shadow-xs border border-primary-container/10 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+                      <Calendar className="h-5 w-5 text-secondary" />
+                    </div>
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="font-label-sm text-xs text-on-surface-variant">Auspicious Day</span>
+                      <input
+                        type="date"
+                        value={formData.eventDate}
+                        disabled={formData.isTentativeDate}
+                        onChange={(e) => updateField("eventDate", e.target.value)}
+                        className="bg-transparent font-title-md text-sm text-primary font-semibold focus:outline-none"
+                      />
+                    </div>
+                    <span className="font-label-sm text-xs px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold">
+                      Lagna Active
+                    </span>
+                  </div>
+
+                  <div className="p-2.5 rounded-lg bg-surface-container-low flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-secondary text-base">date_range</span>
+                      <span className="font-body-sm text-xs text-on-surface">Date is flexible (± 3 days)</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateField("isTentativeDate", !formData.isTentativeDate)}
+                      className={`w-10 h-5 rounded-full p-0.5 flex items-center transition-all cursor-pointer ${
+                        formData.isTentativeDate
+                          ? "bg-primary-container justify-end"
+                          : "bg-surface-variant justify-start"
+                      }`}
+                    >
+                      <span
+                        className={`w-4 h-4 rounded-full shadow-xs block ${
+                          formData.isTentativeDate ? "bg-secondary-fixed" : "bg-surface-container-lowest"
+                        }`}
+                      />
+                    </button>
                   </div>
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <div className="flex justify-between items-center mb-1">
-                      <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66]">
-                        Expected Guests *
-                      </label>
-                      <span className="font-bold text-sm text-[#22092C]">{formData.expectedGuestCount} people</span>
+              {/* Field 4: Location & Venue Ambience */}
+              <div className="flex flex-col gap-2">
+                <label className="font-title-md text-sm text-primary font-semibold">City &amp; Venue Setting</label>
+                <div className="bg-surface-container-lowest p-3.5 rounded-xl shadow-xs border border-primary-container/10 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+                      <MapPin className="h-5 w-5 text-secondary" />
                     </div>
-                    <input
-                      type="range"
-                      min={10}
-                      max={1200}
-                      step={10}
-                      value={formData.expectedGuestCount}
-                      onChange={(e) => updateField("expectedGuestCount", Number(e.target.value))}
-                      className="w-full accent-[#C5A059] cursor-pointer"
-                    />
+                    <div className="flex flex-col flex-1 min-w-0">
+                      <span className="font-label-sm text-xs text-on-surface-variant">Hub Location</span>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => updateField("city", e.target.value)}
+                        placeholder="e.g. Kolkata, West Bengal"
+                        className="bg-transparent font-title-md text-sm text-primary font-semibold focus:outline-none"
+                      />
+                    </div>
+                    <span className="font-label-sm text-xs px-2 py-0.5 rounded-full bg-surface-container text-on-surface-variant font-semibold">
+                      IN
+                    </span>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                      Budget Flexibility
-                    </label>
+                  {/* Venue Chips */}
+                  <div className="flex flex-col gap-1.5 pt-1">
+                    <span className="font-label-sm text-xs text-on-surface-variant">Preferred Environment</span>
                     <div className="grid grid-cols-3 gap-2">
-                      {(["strict", "moderate", "flexible"] as const).map((flex) => (
+                      {(["indoor", "outdoor", "undecided"] as VenueType[]).map((v) => (
                         <button
-                          key={flex}
+                          key={v}
                           type="button"
-                          onClick={() => updateField("budgetFlexibility", flex)}
-                          className={`py-2 px-2 rounded-xl border text-xs font-semibold capitalize transition-all cursor-pointer ${
-                            formData.budgetFlexibility === flex
-                              ? "bg-[#C5A059] text-white border-[#C5A059]"
-                              : "bg-white text-[#5E4B66] border-[#E5D5B5] hover:bg-[#FAF8F5]"
+                          onClick={() => updateField("venueType", v)}
+                          className={`py-2 px-2.5 rounded-lg font-label-md text-xs text-center transition-all flex items-center justify-center gap-1 cursor-pointer capitalize ${
+                            formData.venueType === v
+                              ? "bg-primary-container text-on-primary font-semibold shadow-xs"
+                              : "bg-surface-container-low text-on-surface hover:bg-surface-container"
                           }`}
                         >
-                          {flex}
+                          <span className="material-symbols-outlined text-sm">
+                            {v === "indoor" ? "apartment" : v === "outdoor" ? "park" : "help_center"}
+                          </span>
+                          <span>{v}</span>
                         </button>
                       ))}
                     </div>
                   </div>
                 </div>
+              </div>
 
-                {/* Emergency Reserve Preference */}
-                <div className="rounded-2xl bg-[#FAF8F5] p-4 border border-[#E5D5B5]/60">
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="text-xs font-bold uppercase tracking-wider text-[#B33951] flex items-center gap-1.5">
-                      <ShieldAlert className="h-4 w-4" /> Emergency Contingency Reserve
-                    </label>
-                    <span className="font-bold text-sm text-[#B33951]">
-                      {formData.emergencyReservePct}% ({formatINR(Math.round((formData.totalBudget * formData.emergencyReservePct) / 100))})
-                    </span>
-                  </div>
-                  <p className="text-xs text-[#5E4B66] mb-2">
-                    Protects you against last-minute headcount surges, rain covers, or generator fuel without exceeding your total budget ceiling.
-                  </p>
-                  <input
-                    type="range"
-                    min={0}
-                    max={20}
-                    step={1}
-                    value={formData.emergencyReservePct}
-                    onChange={(e) => updateField("emergencyReservePct", Number(e.target.value))}
-                    className="w-full accent-[#B33951] cursor-pointer"
-                  />
+              {/* Editorial Inspiration Vignette */}
+              <div className="relative rounded-xl overflow-hidden shadow-sm bg-primary-container text-on-primary p-4 flex flex-col gap-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="font-label-sm text-[11px] text-secondary-container tracking-wider uppercase font-semibold">
+                    AI Pre-Curation Note
+                  </span>
+                  <span className="material-symbols-outlined text-secondary-container text-base">auto_awesome</span>
+                </div>
+                <p className="font-headline-sm text-base text-surface-container-lowest leading-snug">
+                  Kolkata in mid-December offers pleasant 18°C evenings—ideal for royal silk drape attire and courtyard Shehnai acoustics.
+                </p>
+                <span className="font-label-sm text-xs text-primary-fixed-dim">
+                  Heritage Rajbari &amp; 5-Star Banquet matrices ready.
+                </span>
+              </div>
+
+              {/* Forward Steps Accordion Previews (Interactive Inspection) */}
+              <div className="flex flex-col gap-2 pt-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-title-md text-sm text-primary font-semibold">Upcoming Stages</span>
+                  <span className="font-label-sm text-xs text-secondary">Tap to preview specs</span>
+                </div>
+
+                {/* Stage 2 Accordion */}
+                <div className="bg-surface-container-lowest rounded-xl shadow-xs border border-primary-container/8 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedAccordion(expandedAccordion === 2 ? null : 2)}
+                    className="w-full px-3.5 py-3 flex items-center justify-between text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center font-label-sm text-xs font-bold text-primary">
+                        2
+                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-title-md text-sm text-primary font-semibold">Budget &amp; Guest Count</span>
+                        <span className="font-label-sm text-xs text-on-surface-variant">₹8,00,000 INR • 300 Guests • 10% Contingency</span>
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-secondary transition-transform ${
+                        expandedAccordion === 2 ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {expandedAccordion === 2 && (
+                    <div className="px-3.5 pb-3.5 pt-1 text-xs text-on-surface-variant bg-surface-container-low rounded-b-xl space-y-1.5">
+                      <div className="flex justify-between">
+                        <span>Catering &amp; Feast:</span>
+                        <span className="font-semibold text-primary">₹2,40,000 (30%)</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Venue &amp; Banquets:</span>
+                        <span className="font-semibold text-primary">₹1,84,000 (23%)</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Emergency Contingency Reserve:</span>
+                        <span className="font-semibold text-secondary">₹80,000 (10%)</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Stage 3 Accordion */}
+                <div className="bg-surface-container-lowest rounded-xl shadow-xs border border-primary-container/8 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedAccordion(expandedAccordion === 3 ? null : 3)}
+                    className="w-full px-3.5 py-3 flex items-center justify-between text-left cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-6 h-6 rounded-full bg-surface-container flex items-center justify-center font-label-sm text-xs font-bold text-primary">
+                        3
+                      </span>
+                      <div className="flex flex-col">
+                        <span className="font-title-md text-sm text-primary font-semibold">Theme &amp; Culinary Style</span>
+                        <span className="font-label-sm text-xs text-on-surface-variant">Traditional Bengali • Crimson &amp; Champagne</span>
+                      </div>
+                    </div>
+                    <ChevronDown
+                      className={`h-4 w-4 text-secondary transition-transform ${
+                        expandedAccordion === 3 ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+                  {expandedAccordion === 3 && (
+                    <div className="px-3.5 pb-3.5 pt-1 text-xs text-on-surface-variant bg-surface-container-low rounded-b-xl space-y-1.5">
+                      <p>
+                        Curated 8-course Bengali Gourmet banquet: Bhetki Paturi, Basanti Pulao, Chingri Malai Curry, and authentic Mishti Dohi counters.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           )}
 
-          {/* STEP 3: PREFERENCES & CULTURAL NUANCES */}
-          {step === 3 && (
-            <div className="space-y-6 animate-in fade-in-50">
-              <div className="border-b border-[#FAF0F3] pb-4">
-                <h2 className="font-serif text-2xl font-bold text-[#22092C]">Theme, Atmosphere &amp; Traditions</h2>
-                <p className="mt-1 text-sm text-[#5E4B66]">
-                  Configure your aesthetic vision and cultural context.
+          {/* STEP 2: BUDGET & GUESTS */}
+          {step === 2 && (
+            <div className="flex flex-col gap-5 animate-in fade-in-50">
+              <div className="pt-1">
+                <h2 className="font-headline-lg-mobile sm:font-headline-lg text-primary tracking-tight">
+                  Budget &amp; Attendance
+                </h2>
+                <p className="font-body-md text-sm text-on-surface-variant mt-1">
+                  Set realistic financial boundaries. Our engine allocates amounts with deterministic precision.
                 </p>
               </div>
 
-              <div className="space-y-5">
-                <Input
-                  label="Event Theme & Concept *"
-                  placeholder="e.g., Traditional Bengali Elegance with Warm Amber Fairy Lights"
-                  value={formData.theme}
-                  onChange={(e) => updateField("theme", e.target.value)}
+              {/* Budget Slider */}
+              <div className="bg-surface-container-lowest p-4 rounded-xl shadow-xs border border-primary-container/10 flex flex-col gap-3">
+                <div className="flex justify-between items-center">
+                  <span className="font-title-md text-sm text-primary font-semibold">Total Target Budget</span>
+                  <span className="font-headline-sm text-xl text-primary font-bold">{formatINR(formData.totalBudget)}</span>
+                </div>
+                <input
+                  type="range"
+                  min={50000}
+                  max={5000000}
+                  step={25000}
+                  value={formData.totalBudget}
+                  onChange={(e) => updateField("totalBudget", Number(e.target.value))}
+                  className="w-full accent-primary-container cursor-pointer"
                 />
+                <div className="flex items-center gap-2 pt-1">
+                  <span className="font-label-sm text-xs text-on-surface-variant">Or enter exact sum:</span>
+                  <input
+                    type="number"
+                    min={5000}
+                    value={formData.totalBudget}
+                    onChange={(e) => updateField("totalBudget", Number(e.target.value))}
+                    className="w-36 rounded-lg border border-primary-container/20 px-2.5 py-1 text-xs font-semibold text-primary bg-surface-container-low focus:outline-none"
+                  />
+                </div>
+              </div>
 
-                {/* Cultural Tradition Selector */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                    Cultural / Regional Tradition
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {CULTURAL_REGIONS.map((region) => (
+              {/* Guest Count & Flexibility */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="bg-surface-container-lowest p-4 rounded-xl shadow-xs border border-primary-container/10 flex flex-col gap-2">
+                  <div className="flex justify-between items-center">
+                    <span className="font-title-md text-sm text-primary font-semibold">Expected Guests</span>
+                    <span className="font-title-md text-sm font-bold text-secondary">{formData.expectedGuestCount} people</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={10}
+                    max={1200}
+                    step={10}
+                    value={formData.expectedGuestCount}
+                    onChange={(e) => updateField("expectedGuestCount", Number(e.target.value))}
+                    className="w-full accent-secondary cursor-pointer mt-1"
+                  />
+                </div>
+
+                <div className="bg-surface-container-lowest p-4 rounded-xl shadow-xs border border-primary-container/10 flex flex-col gap-2">
+                  <span className="font-title-md text-sm text-primary font-semibold">Budget Elasticity</span>
+                  <div className="grid grid-cols-3 gap-1.5 mt-1">
+                    {(["strict", "moderate", "flexible"] as const).map((flex) => (
                       <button
-                        key={region}
+                        key={flex}
                         type="button"
-                        onClick={() => updateField("culturalRegion", region)}
-                        className={`px-3 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
-                          formData.culturalRegion === region
-                            ? "bg-[#3B1242] text-white border-[#3B1242] shadow-xs"
-                            : "bg-white text-[#5E4B66] border-[#E5D5B5] hover:bg-[#FAF8F5]"
+                        onClick={() => updateField("budgetFlexibility", flex)}
+                        className={`py-2 px-1 rounded-lg text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
+                          formData.budgetFlexibility === flex
+                            ? "bg-secondary-container text-on-secondary-container shadow-xs font-bold"
+                            : "bg-surface-container-low text-on-surface hover:bg-surface-container"
                         }`}
                       >
-                        {region}
+                        {flex}
                       </button>
                     ))}
                   </div>
                 </div>
+              </div>
 
-                {/* Color Palette Tags */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                    Preferred Color Palette
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {POPULAR_COLORS.map((col) => {
-                      const isSelected = formData.preferredColors.includes(col);
-                      return (
-                        <button
-                          key={col}
-                          type="button"
-                          onClick={() => toggleArrayItem("preferredColors", col)}
-                          className={`px-3 py-1 rounded-full border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-[#FAF0F3] text-[#B33951] border-[#D95B72] font-semibold"
-                              : "bg-white text-[#5E4B66] border-[#EADBDF] hover:bg-[#FAF8F5]"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3 w-3" />}
-                          <span>{col}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+              {/* Contingency Reserve Card */}
+              <div className="bg-surface-container-lowest p-4 rounded-xl shadow-xs border border-primary-container/10 flex flex-col gap-2">
+                <div className="flex justify-between items-center">
+                  <span className="font-title-md text-sm text-primary font-semibold flex items-center gap-1.5">
+                    <ShieldAlert className="h-4 w-4 text-secondary" />
+                    Emergency Contingency Reserve ({formData.emergencyReservePct}%)
+                  </span>
+                  <span className="font-title-md text-sm font-bold text-secondary">
+                    {formatINR(Math.round((formData.totalBudget * formData.emergencyReservePct) / 100))}
+                  </span>
                 </div>
+                <p className="font-body-sm text-xs text-on-surface-variant leading-relaxed">
+                  Automatically set aside as an unallocated safety cushion for unexpected guest surges, generator fuel, or weather backups.
+                </p>
+                <input
+                  type="range"
+                  min={0}
+                  max={20}
+                  step={1}
+                  value={formData.emergencyReservePct}
+                  onChange={(e) => updateField("emergencyReservePct", Number(e.target.value))}
+                  className="w-full accent-secondary cursor-pointer mt-1"
+                />
+              </div>
+            </div>
+          )}
 
-                {/* Food Preferences */}
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                    Catering &amp; Cuisine Preferences
-                  </label>
-                  <div className="flex flex-wrap gap-2">
-                    {FOOD_TAGS.map((tag) => {
-                      const isSelected = formData.foodPreferences.includes(tag);
-                      return (
-                        <button
-                          key={tag}
-                          type="button"
-                          onClick={() => toggleArrayItem("foodPreferences", tag)}
-                          className={`px-3 py-1 rounded-full border text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-[#FAF4E6] text-[#8C6D23] border-[#C5A059] font-semibold"
-                              : "bg-white text-[#5E4B66] border-[#E5D5B5] hover:bg-[#FAF8F5]"
-                          }`}
-                        >
-                          {isSelected && <Check className="h-3 w-3" />}
-                          <span>{tag}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
+          {/* STEP 3: THEME & TRADITIONS */}
+          {step === 3 && (
+            <div className="flex flex-col gap-5 animate-in fade-in-50">
+              <div className="pt-1">
+                <h2 className="font-headline-lg-mobile sm:font-headline-lg text-primary tracking-tight">
+                  Theme, Atmosphere &amp; Traditions
+                </h2>
+                <p className="font-body-md text-sm text-on-surface-variant mt-1">
+                  Configure your aesthetic vision and cultural context.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-title-md text-sm text-primary font-semibold">Event Theme &amp; Concept</label>
+                <div className="bg-surface-container-lowest p-1 rounded-xl shadow-xs border border-primary-container/10">
+                  <input
+                    type="text"
+                    value={formData.theme}
+                    onChange={(e) => updateField("theme", e.target.value)}
+                    placeholder="e.g., Traditional Bengali Elegance with Warm Amber Fairy Lights"
+                    className="w-full bg-transparent px-3 py-2 font-body-md text-sm text-primary focus:outline-none"
+                  />
                 </div>
+              </div>
 
-                {/* Formality */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                      Atmosphere &amp; Formality
-                    </label>
-                    <select
-                      value={formData.formality}
-                      onChange={(e) => updateField("formality", e.target.value as FormalityLevel)}
-                      className="flex h-11 w-full rounded-xl border border-[#E5D5B5] bg-white px-3.5 py-2 text-sm text-[#22092C] focus:border-[#3B1242] focus:outline-none"
-                    >
-                      <option value="traditional_royal">Traditional Royal / Cultural Grandeur</option>
-                      <option value="formal">Black-Tie / High Formal</option>
-                      <option value="semi_formal">Semi-Formal &amp; Elegant</option>
-                      <option value="casual">Casual &amp; Relaxed Social</option>
-                    </select>
-                  </div>
+              {/* Cultural Tradition Selector */}
+              <div className="flex flex-col gap-2">
+                <label className="font-title-md text-sm text-primary font-semibold">Cultural / Regional Tradition</label>
+                <div className="flex flex-wrap gap-2">
+                  {CULTURAL_REGIONS.map((region) => {
+                    const isSelected = formData.culturalRegion === region;
+                    return (
+                      <button
+                        key={region}
+                        type="button"
+                        onClick={() => updateField("culturalRegion", region)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-primary-container text-on-primary font-semibold shadow-xs"
+                            : "bg-surface-container-lowest text-on-surface hover:bg-surface-container border border-primary-container/8"
+                        }`}
+                      >
+                        {region}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-                  <div>
-                    <Input
-                      label="Accessibility Notes"
-                      placeholder="e.g. Ground floor seating / wheelchair ramp"
-                      value={formData.accessibilityRequirements}
-                      onChange={(e) => updateField("accessibilityRequirements", e.target.value)}
-                    />
-                  </div>
+              {/* Color Palette Tags */}
+              <div className="flex flex-col gap-2">
+                <label className="font-title-md text-sm text-primary font-semibold">Preferred Color Palette</label>
+                <div className="flex flex-wrap gap-2">
+                  {POPULAR_COLORS.map((col) => {
+                    const isSelected = formData.preferredColors.includes(col);
+                    return (
+                      <button
+                        key={col}
+                        type="button"
+                        onClick={() => toggleArrayItem("preferredColors", col)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-secondary-container text-on-secondary-container font-semibold shadow-xs"
+                            : "bg-surface-container-lowest text-on-surface hover:bg-surface-container border border-primary-container/8"
+                        }`}
+                      >
+                        {isSelected && <Check className="h-3 w-3" />}
+                        <span>{col}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Food Preferences */}
+              <div className="flex flex-col gap-2">
+                <label className="font-title-md text-sm text-primary font-semibold">Catering &amp; Cuisine Preferences</label>
+                <div className="flex flex-wrap gap-2">
+                  {FOOD_TAGS.map((tag) => {
+                    const isSelected = formData.foodPreferences.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        type="button"
+                        onClick={() => toggleArrayItem("foodPreferences", tag)}
+                        className={`px-3 py-1 rounded-full text-xs font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
+                          isSelected
+                            ? "bg-primary-container text-on-primary font-semibold shadow-xs"
+                            : "bg-surface-container-lowest text-on-surface hover:bg-surface-container border border-primary-container/8"
+                        }`}
+                      >
+                        {isSelected && <Check className="h-3 w-3" />}
+                        <span>{tag}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -581,180 +801,237 @@ export default function EventWizardPage() {
 
           {/* STEP 4: PLANNING PREFERENCES */}
           {step === 4 && (
-            <div className="space-y-6 animate-in fade-in-50">
-              <div className="border-b border-[#FAF0F3] pb-4">
-                <h2 className="font-serif text-2xl font-bold text-[#22092C]">Planning Approach &amp; Guardrails</h2>
-                <p className="mt-1 text-sm text-[#5E4B66]">Define how much professional help you want and what matters most.</p>
+            <div className="flex flex-col gap-5 animate-in fade-in-50">
+              <div className="pt-1">
+                <h2 className="font-headline-lg-mobile sm:font-headline-lg text-primary tracking-tight">
+                  Planning Approach &amp; Guardrails
+                </h2>
+                <p className="font-body-md text-sm text-on-surface-variant mt-1">
+                  Define how much professional help you want and what matters most.
+                </p>
               </div>
 
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                      Current Planning Stage
-                    </label>
-                    <select
-                      value={formData.planningStage}
-                      onChange={(e) => updateField("planningStage", e.target.value as PlanningStage)}
-                      className="flex h-11 w-full rounded-xl border border-[#E5D5B5] bg-white px-3.5 py-2 text-sm text-[#22092C]"
-                    >
-                      <option value="just_started">Just Started (Idea Stage)</option>
-                      <option value="venue_booked">Venue Booked, Need Rest</option>
-                      <option value="halfway">Halfway Through Planning</option>
-                      <option value="last_month">Final 30-Day Sprint</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-[#5E4B66] mb-1.5">
-                      DIY vs Professional Support
-                    </label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(["full_diy", "hybrid", "full_pro"] as DiyLevel[]).map((level) => (
-                        <button
-                          key={level}
-                          type="button"
-                          onClick={() => updateField("diyLevel", level)}
-                          className={`py-2 px-1 rounded-xl border text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
-                            formData.diyLevel === level
-                              ? "bg-[#3B1242] text-white border-[#3B1242]"
-                              : "bg-white text-[#5E4B66] border-[#E5D5B5] hover:bg-[#FAF8F5]"
-                          }`}
-                        >
-                          {level.replace("_", " ")}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-title-md text-sm text-primary font-semibold">Current Planning Stage</label>
+                  <select
+                    value={formData.planningStage}
+                    onChange={(e) => updateField("planningStage", e.target.value as PlanningStage)}
+                    className="h-11 rounded-xl border border-primary-container/15 bg-surface-container-lowest px-3 py-2 text-xs font-medium text-primary focus:outline-none"
+                  >
+                    <option value="just_started">Just Started (Idea Stage)</option>
+                    <option value="venue_booked">Venue Booked, Need Rest</option>
+                    <option value="halfway">Halfway Through Planning</option>
+                    <option value="last_month">Final 30-Day Sprint</option>
+                  </select>
                 </div>
 
-                <Textarea
-                  label="Sustainability Preferences & Guidelines"
-                  placeholder="e.g. Biodegradable plates, no single-use plastics, digital QR menu, donate surplus food"
-                  value={formData.sustainabilityPreferences}
-                  onChange={(e) => updateField("sustainabilityPreferences", e.target.value)}
-                />
+                <div className="flex flex-col gap-1.5">
+                  <label className="font-title-md text-sm text-primary font-semibold">DIY vs Professional Support</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(["full_diy", "hybrid", "full_pro"] as DiyLevel[]).map((level) => (
+                      <button
+                        key={level}
+                        type="button"
+                        onClick={() => updateField("diyLevel", level)}
+                        className={`h-11 rounded-xl text-xs font-semibold capitalize transition-all cursor-pointer text-center ${
+                          formData.diyLevel === level
+                            ? "bg-primary-container text-on-primary font-bold shadow-xs"
+                            : "bg-surface-container-lowest text-on-surface hover:bg-surface-container border border-primary-container/8"
+                        }`}
+                      >
+                        {level.replace("_", " ")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
 
-                <Textarea
-                  label="Special Requirements / Family Traditions"
-                  placeholder="e.g. Brother carrying bride on wooden piri, special morning Shehnai players, late-night reception"
-                  value={formData.specialRequirements}
-                  onChange={(e) => updateField("specialRequirements", e.target.value)}
-                />
+              <div className="flex flex-col gap-1.5">
+                <label className="font-title-md text-sm text-primary font-semibold">Sustainability Guidelines</label>
+                <div className="bg-surface-container-lowest p-1 rounded-xl shadow-xs border border-primary-container/10">
+                  <textarea
+                    rows={2}
+                    value={formData.sustainabilityPreferences}
+                    onChange={(e) => updateField("sustainabilityPreferences", e.target.value)}
+                    placeholder="e.g. Biodegradable plates, no single-use plastics, digital QR menu"
+                    className="w-full bg-transparent px-3 py-2 font-body-md text-xs text-primary focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="font-title-md text-sm text-primary font-semibold">Special Family Traditions</label>
+                <div className="bg-surface-container-lowest p-1 rounded-xl shadow-xs border border-primary-container/10">
+                  <textarea
+                    rows={2}
+                    value={formData.specialRequirements}
+                    onChange={(e) => updateField("specialRequirements", e.target.value)}
+                    placeholder="e.g. Brother carrying bride on wooden piri, special morning Shehnai players"
+                    className="w-full bg-transparent px-3 py-2 font-body-md text-xs text-primary focus:outline-none"
+                  />
+                </div>
               </div>
             </div>
           )}
 
           {/* STEP 5: REVIEW & SYNTHESIS */}
           {step === 5 && (
-            <div className="space-y-6 animate-in fade-in-50">
-              <div className="border-b border-[#FAF0F3] pb-4">
-                <h2 className="font-serif text-2xl font-bold text-[#22092C]">Review Your Event Blueprint</h2>
-                <p className="mt-1 text-sm text-[#5E4B66]">
+            <div className="flex flex-col gap-5 animate-in fade-in-50">
+              <div className="pt-1">
+                <h2 className="font-headline-lg-mobile sm:font-headline-lg text-primary tracking-tight">
+                  Review Your Event Blueprint
+                </h2>
+                <p className="font-body-md text-sm text-on-surface-variant mt-1">
                   Inspect your configuration before our engine compiles your comprehensive event plan.
                 </p>
               </div>
 
-              {/* Review Summary Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="rounded-2xl border border-[#E5D5B5] bg-[#FAF8F5] p-4 space-y-2.5">
+                <div className="rounded-xl border border-primary-container/10 bg-surface-container-lowest p-4 space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#C5A059]">Event Basics</span>
-                    <button onClick={() => setStep(1)} className="text-xs text-[#3B1242] hover:underline flex items-center gap-1 cursor-pointer">
+                    <span className="font-label-sm text-xs font-bold uppercase tracking-wider text-secondary">
+                      Event Basics
+                    </span>
+                    <button
+                      onClick={() => setStep(1)}
+                      className="font-label-sm text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                    >
                       <Edit2 className="h-3 w-3" /> Edit
                     </button>
                   </div>
-                  <p className="font-serif font-bold text-base text-[#22092C]">{formData.title}</p>
-                  <p className="text-xs text-[#5E4B66]">
-                    Category: <span className="font-semibold text-[#22092C] capitalize">{formData.category.replace("_", " ")}</span>
+                  <p className="font-headline-sm text-base text-primary font-bold">{formData.title}</p>
+                  <p className="font-body-sm text-xs text-on-surface-variant">
+                    Category: <span className="font-semibold text-primary capitalize">{formData.category.replace("_", " ")}</span>
                   </p>
-                  <p className="text-xs text-[#5E4B66]">
-                    City: <span className="font-semibold text-[#22092C]">{formData.city}</span> ({formData.venueType})
+                  <p className="font-body-sm text-xs text-on-surface-variant">
+                    City: <span className="font-semibold text-primary">{formData.city}</span> ({formData.venueType})
                   </p>
-                  <p className="text-xs text-[#5E4B66]">
-                    Date: <span className="font-semibold text-[#22092C]">{formData.isTentativeDate ? "Tentative Date" : formData.eventDate}</span>
+                  <p className="font-body-sm text-xs text-on-surface-variant">
+                    Date: <span className="font-semibold text-primary">{formData.isTentativeDate ? "Tentative Date" : formData.eventDate}</span>
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-[#E5D5B5] bg-[#FAF8F5] p-4 space-y-2.5">
+                <div className="rounded-xl border border-primary-container/10 bg-surface-container-lowest p-4 space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#C5A059]">Budget &amp; Guests</span>
-                    <button onClick={() => setStep(2)} className="text-xs text-[#3B1242] hover:underline flex items-center gap-1 cursor-pointer">
+                    <span className="font-label-sm text-xs font-bold uppercase tracking-wider text-secondary">
+                      Budget &amp; Guests
+                    </span>
+                    <button
+                      onClick={() => setStep(2)}
+                      className="font-label-sm text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                    >
                       <Edit2 className="h-3 w-3" /> Edit
                     </button>
                   </div>
-                  <p className="font-bold text-lg text-[#3B1242]">{formatINR(formData.totalBudget)}</p>
-                  <p className="text-xs text-[#5E4B66]">
-                    Expected Guests: <span className="font-semibold text-[#22092C]">{formData.expectedGuestCount} people</span>
+                  <p className="font-headline-sm text-xl text-primary font-bold">{formatINR(formData.totalBudget)}</p>
+                  <p className="font-body-sm text-xs text-on-surface-variant">
+                    Expected Guests: <span className="font-semibold text-primary">{formData.expectedGuestCount} people</span>
                   </p>
-                  <p className="text-xs text-[#B33951] font-semibold">
-                    Emergency Reserve ({formData.emergencyReservePct}%): {formatINR(Math.round((formData.totalBudget * formData.emergencyReservePct) / 100))}
+                  <p className="font-body-sm text-xs text-secondary font-semibold">
+                    Reserve Buffer ({formData.emergencyReservePct}%): {formatINR(Math.round((formData.totalBudget * formData.emergencyReservePct) / 100))}
                   </p>
                 </div>
 
-                <div className="rounded-2xl border border-[#E5D5B5] bg-[#FAF8F5] p-4 space-y-2.5 md:col-span-2">
+                <div className="rounded-xl border border-primary-container/10 bg-surface-container-lowest p-4 space-y-2 md:col-span-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold uppercase tracking-wider text-[#C5A059]">Atmosphere &amp; Culture</span>
-                    <button onClick={() => setStep(3)} className="text-xs text-[#3B1242] hover:underline flex items-center gap-1 cursor-pointer">
+                    <span className="font-label-sm text-xs font-bold uppercase tracking-wider text-secondary">
+                      Atmosphere &amp; Culture
+                    </span>
+                    <button
+                      onClick={() => setStep(3)}
+                      className="font-label-sm text-xs text-primary hover:underline flex items-center gap-1 cursor-pointer"
+                    >
                       <Edit2 className="h-3 w-3" /> Edit
                     </button>
                   </div>
-                  <p className="text-xs text-[#5E4B66]">
-                    Theme: <span className="font-semibold text-[#22092C]">{formData.theme}</span>
+                  <p className="font-body-sm text-xs text-on-surface-variant">
+                    Theme: <span className="font-semibold text-primary">{formData.theme}</span>
                   </p>
-                  <p className="text-xs text-[#5E4B66]">
-                    Cultural Tradition: <span className="font-semibold text-[#22092C]">{formData.culturalRegion}</span>
+                  <p className="font-body-sm text-xs text-on-surface-variant">
+                    Cultural Tradition: <span className="font-semibold text-primary">{formData.culturalRegion}</span>
                   </p>
                   <div className="flex flex-wrap gap-1.5 pt-1">
                     {formData.preferredColors.map((c) => (
-                      <Badge key={c} variant="rose" className="text-[10px]">
+                      <span key={c} className="font-label-sm text-[10px] px-2 py-0.5 rounded-full bg-surface-container text-primary font-medium">
                         {c}
-                      </Badge>
+                      </span>
                     ))}
                     {formData.foodPreferences.map((f) => (
-                      <Badge key={f} variant="gold" className="text-[10px]">
+                      <span key={f} className="font-label-sm text-[10px] px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-medium">
                         {f}
-                      </Badge>
+                      </span>
                     ))}
                   </div>
                 </div>
               </div>
 
-              {/* Loading animation state if generating */}
-              {isGenerating ? (
-                <div className="rounded-2xl border border-[#C5A059] bg-[#FAF4E6]/50 p-6 text-center space-y-3 animate-pulse">
-                  <Loader2 className="h-8 w-8 text-[#C5A059] animate-spin mx-auto" />
-                  <h4 className="font-serif text-lg font-bold text-[#22092C]">Generating Your Event Plan</h4>
-                  <p className="text-xs text-[#8C6D23] max-w-md mx-auto">{generationPhase}</p>
+              {/* Generating Animation State */}
+              {isGenerating && (
+                <div className="rounded-xl border border-secondary/30 bg-secondary-container/40 p-6 text-center space-y-3 animate-pulse">
+                  <Loader2 className="h-8 w-8 text-secondary animate-spin mx-auto" />
+                  <h4 className="font-headline-sm text-lg text-primary font-bold">Synthesizing Your Celebration Plan</h4>
+                  <p className="font-body-sm text-xs text-on-surface-variant max-w-md mx-auto">{generationPhase}</p>
                 </div>
-              ) : null}
+              )}
             </div>
           )}
 
-          {/* Navigation Buttons */}
-          <div className="mt-8 pt-6 border-t border-[#FAF0F3] flex items-center justify-between">
+          {/* Transparency & Accuracy Disclaimer Card */}
+          <div className="bg-surface-container p-3.5 rounded-xl flex items-start gap-2.5 text-on-surface-variant mt-2">
+            <span className="material-symbols-outlined text-secondary text-lg shrink-0 mt-0.5">info</span>
+            <p className="font-body-sm text-xs leading-relaxed">
+              <strong>Demonstration Figures:</strong> AI-generated prices, allocations, and capacity estimates are simulated recommendations. Exact vendor prices will be verified through real-time quotes upon plan publication.
+            </p>
+          </div>
+        </div>
+
+        {/* Persistent Floating Action Footer */}
+        <div className="fixed bottom-0 left-0 right-0 z-30 bg-surface/95 backdrop-blur-md px-4 sm:px-6 py-3 border-t border-primary-container/10 shadow-xl">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
             {step > 1 ? (
-              <Button type="button" variant="outline" onClick={handleBack} disabled={isGenerating} className="gap-2">
+              <button
+                type="button"
+                onClick={handleBack}
+                disabled={isGenerating}
+                className="py-3 px-4 rounded-xl bg-surface-container text-primary font-label-md text-xs font-semibold hover:bg-surface-variant active:scale-95 transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+              >
                 <ArrowLeft className="h-4 w-4" />
                 <span>Back</span>
-              </Button>
+              </button>
             ) : (
-              <div />
+              <button
+                type="button"
+                onClick={handleManualSaveDraft}
+                className="py-3 px-4 rounded-xl bg-surface-container text-primary font-label-md text-xs font-semibold hover:bg-surface-variant active:scale-95 transition-all flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+              >
+                <Bookmark className="h-4 w-4 text-secondary" />
+                <span>Save Draft</span>
+              </button>
             )}
 
             {step < 5 ? (
-              <Button type="button" variant="primary" onClick={handleNext} className="gap-2">
-                <span>Continue</span>
-                <ArrowRight className="h-4 w-4" />
-              </Button>
-            ) : (
-              <Button
+              <button
                 type="button"
-                variant="gold"
-                size="lg"
+                onClick={handleNext}
+                className="py-3 px-4 rounded-xl bg-primary-container text-on-primary font-label-md text-xs font-semibold shadow-md hover:opacity-95 active:scale-95 transition-all flex-1 flex items-center justify-center gap-2 group cursor-pointer"
+              >
+                <span>
+                  {step === 1 && "Continue to Budget & Guests"}
+                  {step === 2 && "Continue to Theme & Traditions"}
+                  {step === 3 && "Continue to Planning Guardrails"}
+                  {step === 4 && "Review Plan Blueprint"}
+                </span>
+                <span className="material-symbols-outlined text-base text-secondary-fixed transition-transform group-hover:translate-x-1">
+                  arrow_forward
+                </span>
+              </button>
+            ) : (
+              <button
+                type="button"
                 onClick={handleGeneratePlan}
                 disabled={isGenerating}
-                className="gap-2 shadow-lg hover:shadow-xl"
+                className="py-3 px-6 rounded-xl bg-secondary-container text-on-secondary-container font-label-md text-xs font-bold shadow-md hover:opacity-95 active:scale-95 transition-all flex-1 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isGenerating ? (
                   <>
@@ -763,14 +1040,14 @@ export default function EventWizardPage() {
                   </>
                 ) : (
                   <>
-                    <Sparkles className="h-4 w-4" />
-                    <span>Generate My Plan</span>
+                    <span className="material-symbols-outlined text-base">auto_awesome</span>
+                    <span>Generate My Personalized Plan</span>
                   </>
                 )}
-              </Button>
+              </button>
             )}
           </div>
-        </Card>
+        </div>
       </main>
 
       <Footer />
