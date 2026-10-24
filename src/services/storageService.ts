@@ -1,5 +1,5 @@
 import { EventPlan } from "@/types/event";
-import { DEMO_BENGALI_WEDDING } from "@/data/demoEvent";
+import { DEMO_BENGALI_WEDDING, createDemoBengaliWedding } from "@/data/demoEvent";
 
 const ACTIVE_EVENT_ID_KEY = "vow_vibe_active_event_id";
 const EVENTS_STORAGE_KEY = "vow_vibe_events_list";
@@ -29,29 +29,21 @@ export const StorageService = {
       const raw = localStorage.getItem(EVENTS_STORAGE_KEY);
       if (!raw) {
         // Initialize with default demo event
-        const initial = [DEMO_BENGALI_WEDDING];
+        const initial = [createDemoBengaliWedding()];
         localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(initial));
         return initial;
       }
       const parsed: EventPlan[] = JSON.parse(raw);
-      // Ensure demo event exists and is dynamically up to date
+      // Ensure demo event exists if list is empty
       const demoIdx = parsed.findIndex((e) => e.id === DEMO_BENGALI_WEDDING.id);
-      if (demoIdx === -1) {
-        parsed.unshift(DEMO_BENGALI_WEDDING);
-        localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(parsed));
-      } else if (parsed[demoIdx].isDemo) {
-        // Keep demo event date dynamically fresh
-        parsed[demoIdx] = {
-          ...parsed[demoIdx],
-          eventDate: DEMO_BENGALI_WEDDING.eventDate,
-          timeline: DEMO_BENGALI_WEDDING.timeline,
-        };
+      if (demoIdx === -1 && parsed.length === 0) {
+        parsed.unshift(createDemoBengaliWedding());
         localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(parsed));
       }
       return parsed;
     } catch (e) {
       console.error("Failed to read events from localStorage", e);
-      return [DEMO_BENGALI_WEDDING];
+      return [createDemoBengaliWedding()];
     }
   },
 
@@ -110,17 +102,17 @@ export const StorageService = {
 
   // --- Reset Demo Event to Pristine State ---
   resetDemoEvent(): EventPlan {
-    if (typeof window === "undefined") return DEMO_BENGALI_WEDDING;
+    if (typeof window === "undefined") return createDemoBengaliWedding();
     try {
       const events = this.getAllEvents().filter((e) => e.id !== DEMO_BENGALI_WEDDING.id);
-      const freshDemo = { ...DEMO_BENGALI_WEDDING, updatedAt: new Date().toISOString() };
+      const freshDemo = { ...createDemoBengaliWedding(), updatedAt: new Date().toISOString() };
       events.unshift(freshDemo);
       localStorage.setItem(EVENTS_STORAGE_KEY, JSON.stringify(events));
       localStorage.setItem(ACTIVE_EVENT_ID_KEY, freshDemo.id);
       return freshDemo;
     } catch (e) {
       console.error("Failed to reset demo event", e);
-      return DEMO_BENGALI_WEDDING;
+      return createDemoBengaliWedding();
     }
   },
 

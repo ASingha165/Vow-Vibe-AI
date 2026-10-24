@@ -13,6 +13,8 @@ export {
   validateEventDate,
   getTimeUntilNextMidnight,
   getCalendarGrid,
+  formatDateDisplay,
+  parseDateDisplay,
 } from "./dateUtils";
 
 export function cn(...inputs: ClassValue[]) {

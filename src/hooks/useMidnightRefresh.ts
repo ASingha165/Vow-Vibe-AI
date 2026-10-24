@@ -14,7 +14,9 @@ export function useMidnightRefresh(): string {
   const [todayStr, setTodayStr] = React.useState<string>("");
 
   React.useEffect(() => {
-    setTodayStr(getLocalDateString());
+    // Ensure accurate client date on mount (deferred from SSR to satisfy Next.js prerender rules)
+    const clientToday = getLocalDateString();
+    setTodayStr(clientToday);
 
     let timeoutId: NodeJS.Timeout | null = null;
 

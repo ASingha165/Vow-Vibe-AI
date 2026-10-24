@@ -63,15 +63,52 @@ export function diffCalendarDays(dateStrA: string, dateStrB: string): number {
 
 /**
  * Timezone-safe addition or subtraction of calendar days to a "YYYY-MM-DD" date string.
+ * Uses local noon (12:00:00) to ensure Daylight Saving Time shifts cannot cross midnight.
  */
 export function addDaysToLocalDate(dateStr: string, days: number): string {
   const parsed = parseLocalDate(dateStr);
   if (!parsed) return dateStr;
 
-  const date = new Date(parsed.year, parsed.month - 1, parsed.day);
+  const date = new Date(parsed.year, parsed.month - 1, parsed.day, 12, 0, 0);
   date.setDate(date.getDate() + days);
 
   return getLocalDateString(date);
+}
+
+/**
+ * Format a canonical "YYYY-MM-DD" date string into "DD/MM/YYYY" display format.
+ * Pure calendar extraction without UTC timezone shifts.
+ */
+export function formatDateDisplay(dateStr: string): string {
+  if (!dateStr || typeof dateStr !== "string") return "";
+  const parsed = parseLocalDate(dateStr);
+  if (!parsed) return "";
+  const day = String(parsed.day).padStart(2, "0");
+  const month = String(parsed.month).padStart(2, "0");
+  const year = parsed.year;
+  return `${day}/${month}/${year}`;
+}
+
+/**
+ * Parse a "DD/MM/YYYY" or "DD-MM-YYYY" display string into canonical "YYYY-MM-DD".
+ * Returns null if format is invalid or represents an impossible calendar date.
+ */
+export function parseDateDisplay(displayStr: string): string | null {
+  if (!displayStr || typeof displayStr !== "string") return null;
+  const match = displayStr.trim().match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (!match) return null;
+
+  const day = parseInt(match[1], 10);
+  const month = parseInt(match[2], 10);
+  const year = parseInt(match[3], 10);
+
+  if (month < 1 || month > 12) return null;
+  if (day < 1 || day > 31) return null;
+
+  const maxDays = getDaysInMonth(year, month);
+  if (day > maxDays) return null;
+
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
 /**

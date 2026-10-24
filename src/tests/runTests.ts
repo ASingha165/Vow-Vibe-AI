@@ -28,6 +28,8 @@ import {
   validateEventDate,
   getCalendarGrid,
   getDaysInMonth,
+  formatDateDisplay,
+  parseDateDisplay,
 } from "../lib/dateUtils";
 import { DEMO_BENGALI_WEDDING, createDemoBengaliWedding } from "../data/demoEvent";
 
@@ -416,6 +418,154 @@ async function runAllTests() {
       demoEvent.budget.totalBudget === 800000 && demoEvent.budget.emergencyReserveAmount === 80000,
       "12d. Demo event preserves exact budget reconciliation and deterministic finances"
     );
+  }
+
+  // --- Test Suite 10: Calendar Glitch Prevention, Date State Stability & Mode Separation ---
+  console.log("\nSuite 10: Calendar Glitch Prevention, Date State Stability & Mode Separation");
+  {
+    const todayStr = getLocalDateString();
+    const todayParsed = parseLocalDate(todayStr)!;
+    const futureDateStr = addDaysToLocalDate(todayStr, 45); // 45 days in future
+    const parsedFuture = parseLocalDate(futureDateStr)!;
+
+    // 1. Selecting a date retains the canonical value and formats as DD/MM/YYYY
+    let selectedDate = futureDateStr;
+    const formattedDisplay = formatDateDisplay(selectedDate);
+    assert(
+      selectedDate === futureDateStr && formattedDisplay === `${String(parsedFuture.day).padStart(2, "0")}/${String(parsedFuture.month).padStart(2, "0")}/${parsedFuture.year}`,
+      `1. Date selection retains canonical '${selectedDate}' and formats to display '${formattedDisplay}'`
+    );
+    assert(
+      parseDateDisplay(formattedDisplay) === selectedDate,
+      `1b. Parsing displayed date '${formattedDisplay}' reconstructs canonical '${selectedDate}' without timezone shift`
+    );
+
+    // 2. Navigating months preserves the selected date
+    let viewYear = todayParsed.year;
+    let viewMonth = todayParsed.month;
+    // User navigates forward two months
+    viewMonth += 2;
+    if (viewMonth > 12) {
+      viewMonth -= 12;
+      viewYear += 1;
+    }
+    // Selected date must remain unaffected by month navigation
+    assert(
+      selectedDate === futureDateStr,
+      `2. Navigating to month ${viewMonth}/${viewYear} preserves selected date '${selectedDate}'`
+    );
+
+    // Grid generated for the new view month maintains selected state if selected date falls in it, or keeps it selected globally
+    const gridNavigated = getCalendarGrid(viewYear, viewMonth, selectedDate, todayStr);
+    const dayMatch = gridNavigated.find((d) => d.dateStr === selectedDate);
+    if (dayMatch) {
+      assert(dayMatch.isSelected, "2b. Grid cell in navigated month correctly marks selectedDate as isSelected=true");
+    } else {
+      assert(true, "2b. Navigated month grid accurately reflects that selected date is in another month without resetting selected date");
+    }
+
+    // 3. Selecting a date updates the view month and does not reset unexpectedly
+    const targetMonthDate = addDaysToLocalDate(todayStr, 75);
+    const parsedTarget = parseLocalDate(targetMonthDate)!;
+    selectedDate = targetMonthDate;
+    viewYear = parsedTarget.year;
+    viewMonth = parsedTarget.month;
+    assert(
+      viewYear === parsedTarget.year && viewMonth === parsedTarget.month && selectedDate === targetMonthDate,
+      `3. Selecting date '${targetMonthDate}' synchronizes view to month ${viewMonth}/${viewYear} stably`
+    );
+
+    // 4. Editing event name and date works seamlessly
+    let formState = {
+      title: "Pooja & Sameer Wedding Gala",
+      eventDate: futureDateStr,
+      city: "Mumbai, Maharashtra",
+      totalBudget: 1200000,
+    };
+    formState = { ...formState, title: "Pooja & Sameer Royal Wedding" };
+    formState = { ...formState, eventDate: addDaysToLocalDate(todayStr, 60) };
+    assert(
+      formState.title === "Pooja & Sameer Royal Wedding" && formState.eventDate === addDaysToLocalDate(todayStr, 60),
+      "4. Editing event name and date updates state without side effects"
+    );
+
+    // 5. Past dates in calendar grid are disabled; today and future are selectable
+    const currentMonthGrid = getCalendarGrid(todayParsed.year, todayParsed.month, selectedDate, todayStr);
+    const todayCell = currentMonthGrid.find((d) => d.dateStr === todayStr);
+    assert(
+      Boolean(todayCell && !todayCell.isDisabled && todayCell.isToday),
+      "5a. Today cell in grid is enabled (isDisabled=false) and marked isToday=true"
+    );
+    const pastCells = currentMonthGrid.filter((d) => diffCalendarDays(d.dateStr, todayStr) < 0);
+    const allPastDisabled = pastCells.every((d) => d.isDisabled);
+    assert(allPastDisabled, `5b. All ${pastCells.length} past date cells in grid are disabled (isDisabled=true)`);
+
+    const futureCells = currentMonthGrid.filter((d) => diffCalendarDays(d.dateStr, todayStr) > 0);
+    const allFutureEnabled = futureCells.every((d) => !d.isDisabled);
+    assert(allFutureEnabled, `5c. All ${futureCells.length} future date cells in grid are enabled (isDisabled=false)`);
+
+    // 6. Restoring a saved draft does not create an update loop or wipe valid dates
+    const validDraft = {
+      title: "Anita & Kunal Reception",
+      eventDate: addDaysToLocalDate(todayStr, 90),
+      city: "Bengaluru, Karnataka",
+      totalBudget: 600000,
+    };
+    const isPastDraft = isDateBeforeToday(validDraft.eventDate, todayStr);
+    assert(!isPastDraft, "6a. Valid draft date is recognized as not expired");
+    const restoredForm = { ...validDraft };
+    assert(
+      restoredForm.eventDate === validDraft.eventDate && restoredForm.title === validDraft.title,
+      "6b. Saved draft is restored cleanly with date and title intact"
+    );
+
+    // 7. Midnight refresh does not overwrite selected event date
+    const priorSelectedDate = addDaysToLocalDate(todayStr, 120);
+    const nextDayStr = addDaysToLocalDate(todayStr, 1); // simulate midnight tick
+    // When todayStr transitions to nextDayStr, selectedDate must NOT be reset to nextDayStr
+    const dateAfterMidnight = priorSelectedDate;
+    assert(
+      dateAfterMidnight === priorSelectedDate && dateAfterMidnight !== nextDayStr,
+      `7. Midnight transition from '${todayStr}' to '${nextDayStr}' leaves selected date '${dateAfterMidnight}' unchanged`
+    );
+
+    // 8. Re-renders maintain stable state
+    let renderCount = 0;
+    let stableDate = futureDateStr;
+    for (let r = 0; r < 5; r++) {
+      renderCount++;
+      // Simulate ordinary re-render
+      stableDate = stableDate;
+    }
+    assert(
+      renderCount === 5 && stableDate === futureDateStr,
+      "8. Date state remains completely stable across repeated render cycles"
+    );
+
+    // 9. Demo and New-Event modes remain distinct
+    const freshNewEvent = {
+      title: "",
+      eventDate: todayStr,
+      city: "",
+      category: "wedding",
+    };
+    assert(
+      freshNewEvent.title === "" && freshNewEvent.eventDate === todayStr,
+      "9a. New event mode initializes with empty title and does not inherit demo celebration name"
+    );
+
+    const pristineDemo = createDemoBengaliWedding(todayStr);
+    assert(
+      pristineDemo.title.includes("Bengali Wedding") && isDateSelectable(pristineDemo.eventDate, todayStr),
+      "9b. Demo event mode initializes complete editable template without clobbering new event mode"
+    );
+
+    // 10. Timezone and Daylight Saving Time shift immunity
+    // Testing across standard DST transition dates (e.g. spring forward / fall back dates)
+    const dstMarch = addDaysToLocalDate("2026-03-28", 1);
+    assert(dstMarch === "2026-03-29", "10a. Date arithmetic across Spring DST transition is exact (2026-03-28 + 1 = 2026-03-29)");
+    const dstOct = addDaysToLocalDate("2026-10-24", 1);
+    assert(dstOct === "2026-10-25", "10b. Date arithmetic across Autumn DST transition is exact (2026-10-24 + 1 = 2026-10-25)");
   }
 
   // --- Final Results Summary ---

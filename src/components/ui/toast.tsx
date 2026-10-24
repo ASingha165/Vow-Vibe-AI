@@ -74,15 +74,15 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function useToast() {
+const fallbackToastContext: ToastContextType = {
+  toast: ({ title, message }: { type?: "success" | "error" | "info"; title: string; message?: string }) => {
+    if (typeof window !== "undefined" && process.env.NODE_ENV !== "production") {
+      console.log(`[Toast] ${title}: ${message || ""}`);
+    }
+  },
+};
+
+export function useToast(): ToastContextType {
   const context = React.useContext(ToastContext);
-  if (!context) {
-    // Return fallback noop if outside provider
-    return {
-      toast: ({ title, message }: { title: string; message?: string }) => {
-        console.log(`[Toast] ${title}: ${message || ""}`);
-      },
-    };
-  }
-  return context;
+  return context || fallbackToastContext;
 }

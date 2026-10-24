@@ -29,6 +29,8 @@ export const metadata: Metadata = {
   authors: [{ name: "Vow & Vibe AI Architecture Team" }],
 };
 
+import { ToastProvider } from "@/components/ui/toast";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -43,7 +45,7 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-full flex flex-col font-sans bg-[#FEF8F3] text-[#1D1B19]">
-        {children}
+        <ToastProvider>{children}</ToastProvider>
       </body>
     </html>
   );

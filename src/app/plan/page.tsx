@@ -23,14 +23,18 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  PlusCircle,
+  Compass,
 } from "lucide-react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { useToast } from "@/components/ui/toast";
-import { EventCategory, EventWizardInput, VenueType, FormalityLevel, PlanningStage, DiyLevel } from "@/types/event";
+import { EventCategory, EventPlan, EventWizardInput, VenueType, FormalityLevel, PlanningStage, DiyLevel } from "@/types/event";
 import {
   formatINR,
   formatDate,
+  formatDateDisplay,
+  parseDateDisplay,
   getDaysRemaining,
   getLocalDateString,
   parseLocalDate,
@@ -38,6 +42,7 @@ import {
   canNavigateToPreviousMonth,
   getCalendarGrid,
 } from "@/lib/utils";
+import { DEMO_BENGALI_WEDDING, createDemoBengaliWedding } from "@/data/demoEvent";
 import { useMidnightRefresh } from "@/hooks/useMidnightRefresh";
 import { StorageService } from "@/services/storageService";
 
@@ -127,6 +132,60 @@ const CELEBRATION_TYPES = [
   },
 ];
 
+const getInitialNewEventInput = (clientToday: string = ""): EventWizardInput => ({
+  title: "",
+  category: "wedding",
+  eventDate: clientToday,
+  isTentativeDate: false,
+  city: "",
+  venueType: "indoor",
+  totalBudget: 800000,
+  currency: "INR",
+  expectedGuestCount: 300,
+  budgetFlexibility: "moderate",
+  emergencyReservePct: 10,
+  theme: "",
+  preferredColors: ["Crimson Red", "Champagne Gold"],
+  culturalRegion: "Pan-Indian Contemporary",
+  foodPreferences: [],
+  formality: "traditional_royal",
+  accessibilityRequirements: "",
+  mustHaves: [],
+  thingsToAvoid: [],
+  planningStage: "just_started",
+  diyLevel: "hybrid",
+  priorityCategories: ["Catering & Royal Feast", "Heritage Venue & Lawns"],
+  sustainabilityPreferences: "",
+  specialRequirements: "",
+});
+
+const convertEventPlanToWizardInput = (event: EventPlan): EventWizardInput => ({
+  title: event.title,
+  category: event.category,
+  eventDate: event.eventDate,
+  isTentativeDate: event.isTentativeDate,
+  city: event.location?.city || "",
+  venueType: event.location?.venueType || "indoor",
+  totalBudget: event.budget?.totalBudget || 800000,
+  currency: event.budget?.currency || "INR",
+  expectedGuestCount: event.guests?.expectedCount || 300,
+  budgetFlexibility: event.guests?.flexibility || "moderate",
+  emergencyReservePct: event.budget?.emergencyReservePct || 10,
+  theme: event.preferences?.theme || "",
+  preferredColors: event.preferences?.preferredColors ? [...event.preferences.preferredColors] : [],
+  culturalRegion: event.preferences?.culturalRegion || "Bengali (Kolkata Tradition)",
+  foodPreferences: event.preferences?.foodPreferences ? [...event.preferences.foodPreferences] : [],
+  formality: event.preferences?.formality || "traditional_royal",
+  accessibilityRequirements: event.preferences?.accessibilityRequirements || "",
+  mustHaves: event.preferences?.mustHaves ? [...event.preferences.mustHaves] : [],
+  thingsToAvoid: event.preferences?.thingsToAvoid ? [...event.preferences.thingsToAvoid] : [],
+  planningStage: event.planning?.stage || "just_started",
+  diyLevel: event.planning?.diyLevel || "hybrid",
+  priorityCategories: event.planning?.priorityCategories ? [...event.planning.priorityCategories] : [],
+  sustainabilityPreferences: event.planning?.sustainabilityNotes || "",
+  specialRequirements: event.planning?.specialRequirements || "",
+});
+
 export default function EventWizardPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -139,51 +198,42 @@ export default function EventWizardPage() {
   // Dynamic local date & midnight refresh
   const todayStr = useMidnightRefresh();
   const [mounted, setMounted] = React.useState(false);
+  const [formMode, setFormMode] = React.useState<"new" | "demo">("new");
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState<boolean>(true);
+  const initialLoadRef = React.useRef(false);
 
   const todayParsed = React.useMemo(() => {
     if (todayStr) {
       const parsed = parseLocalDate(todayStr);
       if (parsed) return parsed;
     }
-    return { year: 2026, month: 10, day: 24 };
+    // Safe deterministic fallback for SSR/prerender to prevent evaluating new Date()
+    return { year: 2026, month: 10, day: 25 };
   }, [todayStr]);
 
+  const effectiveToday = React.useMemo(() => {
+    if (todayStr) return todayStr;
+    return `${todayParsed.year}-${String(todayParsed.month).padStart(2, "0")}-${String(todayParsed.day).padStart(2, "0")}`;
+  }, [todayStr, todayParsed]);
+
   // Calendar View Month and Year State (1-based month: 1 = Jan, 12 = Dec)
+  // Initialized statically for SSR/prerender, synchronized on client mount
   const [viewYear, setViewYear] = React.useState<number>(2026);
   const [viewMonth, setViewMonth] = React.useState<number>(10);
   const [dateError, setDateError] = React.useState<string | null>(null);
 
   // Form State with Initial Defaults
-  const [formData, setFormData] = React.useState<EventWizardInput>({
-    title: "Bengali Wedding Celebration - Ananya & Rohan",
-    category: "wedding",
-    eventDate: "",
-    isTentativeDate: false,
-    city: "Kolkata, West Bengal",
-    venueType: "indoor",
-    totalBudget: 800000,
-    currency: "INR",
-    expectedGuestCount: 300,
-    budgetFlexibility: "moderate",
-    emergencyReservePct: 10,
-    theme: "Heritage Rajbari Elegance with Ambient Amber Lighting",
-    preferredColors: ["Crimson Red", "Champagne Gold", "Warm Ivory"],
-    culturalRegion: "Bengali (Kolkata Tradition)",
-    foodPreferences: ["Authentic Regional Feast", "Live Street Chaat Counter"],
-    formality: "traditional_royal",
-    accessibilityRequirements: "Ground floor access & wheelchair ramps",
-    mustHaves: ["Auspicious Shehnai Ensemble", "Floral Rajnigandha Mandap", "Candid Photojournalism Duo"],
-    thingsToAvoid: ["Loud commercial DJ music during Saat Paake Ghaura"],
-    planningStage: "just_started",
-    diyLevel: "hybrid",
-    priorityCategories: ["Catering & Beverages", "Venue & Lawns"],
-    sustainabilityPreferences: "Sal leaf plates and donation of surplus meal boxes to local shelter",
-    specialRequirements: "Authentic Gaye Holud brass urli setup with fresh marigold strings",
-  });
+  // Initialized statically for SSR/prerender, hydrated on client mount
+  const [formData, setFormData] = React.useState<EventWizardInput>(() =>
+    getInitialNewEventInput("")
+  );
 
-  // Load draft or initialize default date on mount with past-date verification
+  // Load draft or initialize default date on mount (runs ONCE on mount)
   React.useEffect(() => {
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
     setMounted(true);
+
     const clientToday = getLocalDateString();
     const parsedToday = parseLocalDate(clientToday);
     if (parsedToday) {
@@ -191,22 +241,44 @@ export default function EventWizardPage() {
       setViewMonth(parsedToday.month);
     }
 
+    // Check URL parameters for demo mode (e.g. /plan?mode=demo)
+    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+    const isDemoRequested = searchParams?.get("mode") === "demo" || searchParams?.get("edit") === "demo";
+
+    if (isDemoRequested) {
+      const activeEvent = StorageService.getCurrentEvent();
+      const demoSource =
+        (activeEvent && activeEvent.isDemo ? activeEvent : null) ||
+        StorageService.getEventById(DEMO_BENGALI_WEDDING.id) ||
+        createDemoBengaliWedding();
+
+      const demoInput = convertEventPlanToWizardInput(demoSource);
+      setFormData(demoInput);
+      setFormMode("demo");
+      if (demoInput.eventDate) {
+        const parsed = parseLocalDate(demoInput.eventDate);
+        if (parsed) {
+          setViewYear(parsed.year);
+          setViewMonth(parsed.month);
+        }
+      }
+      return;
+    }
+
+    // Otherwise check for saved draft
     const draft = StorageService.getWizardDraft<EventWizardInput>();
-    if (draft && draft.title) {
+    if (draft && (draft.title?.trim() || draft.city?.trim())) {
       if (draft.eventDate && isDateBeforeToday(draft.eventDate, clientToday)) {
-        // Saved draft contains a past date:
-        // 1. Preserve the rest of the draft
-        // 2. Flag the date as invalid
-        // 3. Ask user to choose today or a future date
+        // Saved draft contains a past date: preserve other fields, update date to today
         setFormData({
           ...draft,
-          eventDate: "",
+          eventDate: clientToday,
         });
-        setDateError("The date in your saved draft is in the past. Please select today or a future date.");
+        setDateError("The date in your saved draft was in the past. It has been updated to today.");
         toast({
           type: "info",
-          title: "Draft Date Expired",
-          message: "The date in your saved draft is in the past. Please choose today or a future date.",
+          title: "Draft Date Updated",
+          message: "The date in your saved draft was in the past; updated to today.",
         });
       } else {
         // Valid future or today date: preserve it
@@ -220,23 +292,64 @@ export default function EventWizardPage() {
         }
       }
     } else {
-      // If a new event has no selected date, initialize it dynamically to today
-      setFormData((prev) => ({
-        ...prev,
-        eventDate: prev.eventDate || clientToday,
-      }));
+      // Clean fresh new event
+      setFormData(getInitialNewEventInput(clientToday));
     }
   }, [toast]);
 
-  // Save draft whenever formData changes
+  // Save draft whenever formData changes (only after initial load has finished)
   React.useEffect(() => {
-    if (formData.title || formData.city) {
+    if (!initialLoadRef.current) return;
+    if (formData.title.trim() || formData.city.trim()) {
       StorageService.saveWizardDraft(formData);
     }
   }, [formData]);
 
   const updateField = <K extends keyof EventWizardInput>(field: K, value: EventWizardInput[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleStartFresh = () => {
+    const clientToday = getLocalDateString();
+    const parsedToday = parseLocalDate(clientToday);
+    if (parsedToday) {
+      setViewYear(parsedToday.year);
+      setViewMonth(parsedToday.month);
+    }
+    setFormData(getInitialNewEventInput(clientToday));
+    setFormMode("new");
+    setDateError(null);
+    StorageService.clearWizardDraft();
+    toast({
+      type: "info",
+      title: "New Event Started",
+      message: "Ready to plan your new celebration with a clean form.",
+    });
+  };
+
+  const handleLoadDemoEvent = () => {
+    const activeEvent = StorageService.getCurrentEvent();
+    const demoSource =
+      (activeEvent && activeEvent.isDemo ? activeEvent : null) ||
+      StorageService.getEventById(DEMO_BENGALI_WEDDING.id) ||
+      createDemoBengaliWedding();
+
+    const demoInput = convertEventPlanToWizardInput(demoSource);
+    setFormData(demoInput);
+    setFormMode("demo");
+    setDateError(null);
+    if (demoInput.eventDate) {
+      const parsed = parseLocalDate(demoInput.eventDate);
+      if (parsed) {
+        setViewYear(parsed.year);
+        setViewMonth(parsed.month);
+      }
+    }
+    toast({
+      type: "success",
+      title: "Loaded Bengali Wedding Demo",
+      message: "Editable template with ₹8,00,000 budget & 300 guests loaded.",
+    });
   };
 
   const handleDateChange = (newDateStr: string) => {
@@ -290,12 +403,12 @@ export default function EventWizardPage() {
   const handleJumpToToday = () => {
     setViewYear(todayParsed.year);
     setViewMonth(todayParsed.month);
-    handleDateChange(todayStr);
+    handleDateChange(todayStr || effectiveToday);
   };
 
   const calendarDays = React.useMemo(() => {
-    return getCalendarGrid(viewYear, viewMonth, formData.eventDate, todayStr || "2026-10-24");
-  }, [viewYear, viewMonth, formData.eventDate, todayStr]);
+    return getCalendarGrid(viewYear, viewMonth, formData.eventDate, effectiveToday);
+  }, [viewYear, viewMonth, formData.eventDate, effectiveToday]);
 
   const toggleArrayItem = (
     field: "preferredColors" | "foodPreferences" | "mustHaves" | "thingsToAvoid",
@@ -493,6 +606,37 @@ export default function EventWizardPage() {
                 </p>
               </div>
 
+              {/* Flow Selector: New Event vs Edit Demo Event */}
+              <div className="flex items-center gap-2 p-1.5 rounded-xl bg-surface-container-low border border-primary-container/10">
+                <button
+                  id="flow-new-event-btn"
+                  type="button"
+                  onClick={handleStartFresh}
+                  className={`flex-1 py-2 px-3 rounded-lg font-label-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    formMode === "new"
+                      ? "bg-primary-container text-on-primary shadow-xs"
+                      : "text-on-surface-variant hover:text-primary hover:bg-surface-container"
+                  }`}
+                >
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span>Create New Event</span>
+                </button>
+
+                <button
+                  id="flow-edit-demo-btn"
+                  type="button"
+                  onClick={handleLoadDemoEvent}
+                  className={`flex-1 py-2 px-3 rounded-lg font-label-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                    formMode === "demo"
+                      ? "bg-primary-container text-on-primary shadow-xs"
+                      : "text-on-surface-variant hover:text-primary hover:bg-surface-container"
+                  }`}
+                >
+                  <Compass className="h-3.5 w-3.5" />
+                  <span>Edit Demo Event</span>
+                </button>
+              </div>
+
               {/* Field 1: Event Title */}
               <div className="flex flex-col gap-1.5">
                 <label className="font-title-md text-sm text-primary flex items-center justify-between">
@@ -572,32 +716,55 @@ export default function EventWizardPage() {
                   <span>Target Date</span>
                   {formData.eventDate && !formData.isTentativeDate && !dateError && (
                     <span className="font-label-sm text-xs text-secondary font-medium">
-                      {getDaysRemaining(formData.eventDate, todayStr).text}
+                      {getDaysRemaining(formData.eventDate, effectiveToday).text}
                     </span>
                   )}
                 </label>
                 <div className="bg-surface-container-lowest p-3.5 rounded-xl shadow-xs border border-primary-container/10 flex flex-col gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
-                      <Calendar className="h-5 w-5 text-secondary" />
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="w-10 h-10 rounded-lg bg-surface-container flex items-center justify-center text-primary shrink-0">
+                        <Calendar className="h-5 w-5 text-secondary" />
+                      </div>
+                      <div className="flex flex-col flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-label-sm text-xs text-on-surface-variant">Auspicious Day</span>
+                          <span
+                            id="selected-date-display"
+                            className="font-label-sm text-xs px-2 py-0.2 rounded bg-surface-container font-mono text-secondary font-bold"
+                          >
+                            {formData.eventDate ? formatDateDisplay(formData.eventDate) : "DD/MM/YYYY"}
+                          </span>
+                        </div>
+                        <input
+                          id="event-date-input"
+                          type="date"
+                          min={effectiveToday}
+                          value={formData.eventDate}
+                          disabled={formData.isTentativeDate}
+                          onChange={(e) => handleDateChange(e.target.value)}
+                          className={`bg-transparent font-title-md text-sm font-semibold focus:outline-none ${
+                            dateError ? "text-error" : "text-primary"
+                          }`}
+                        />
+                      </div>
                     </div>
-                    <div className="flex flex-col flex-1 min-w-0">
-                      <span className="font-label-sm text-xs text-on-surface-variant">Auspicious Day</span>
-                      <input
-                        id="event-date-input"
-                        type="date"
-                        min={todayStr}
-                        value={formData.eventDate}
-                        disabled={formData.isTentativeDate}
-                        onChange={(e) => handleDateChange(e.target.value)}
-                        className={`bg-transparent font-title-md text-sm font-semibold focus:outline-none ${
-                          dateError ? "text-error" : "text-primary"
-                        }`}
-                      />
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="font-label-sm text-xs px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-container font-semibold">
+                        {formData.isTentativeDate ? "Flexible" : "Lagna Active"}
+                      </span>
+                      {!formData.isTentativeDate && (
+                        <button
+                          type="button"
+                          id="toggle-calendar-button"
+                          onClick={() => setIsCalendarOpen((prev) => !prev)}
+                          className="font-label-sm text-xs px-2.5 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary transition-colors cursor-pointer"
+                        >
+                          {isCalendarOpen ? "Close Calendar" : "Open Calendar"}
+                        </button>
+                      )}
                     </div>
-                    <span className="font-label-sm text-xs px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-semibold">
-                      {formData.isTentativeDate ? "Flexible" : "Lagna Active"}
-                    </span>
                   </div>
 
                   {/* Inline Date Validation Error */}
@@ -612,8 +779,8 @@ export default function EventWizardPage() {
                   )}
 
                   {/* Interactive Dynamic Calendar UI */}
-                  {!formData.isTentativeDate && (
-                    <div className="border-t border-primary-container/10 pt-3 flex flex-col gap-2.5">
+                  {!formData.isTentativeDate && isCalendarOpen && (
+                    <div className="border-t border-primary-container/10 pt-3 flex flex-col gap-2.5 animate-in fade-in-50">
                       {/* Month & Year Navigation Header */}
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-1.5">
@@ -625,7 +792,7 @@ export default function EventWizardPage() {
                             aria-label="Previous Month"
                             className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${
                               canGoPrevMonth
-                                ? "bg-surface-container text-primary hover:bg-surface-container-high cursor-pointer"
+                                ? "bg-surface-container text-primary hover:bg-surface-container-high cursor-pointer shadow-xs active:scale-95"
                                 : "opacity-30 cursor-not-allowed text-outline"
                             }`}
                           >
@@ -642,20 +809,22 @@ export default function EventWizardPage() {
                             type="button"
                             onClick={handleNextMonth}
                             aria-label="Next Month"
-                            className="w-7 h-7 rounded-lg bg-surface-container text-primary hover:bg-surface-container-high flex items-center justify-center transition-all cursor-pointer"
+                            className="w-7 h-7 rounded-lg bg-surface-container text-primary hover:bg-surface-container-high flex items-center justify-center transition-all cursor-pointer shadow-xs active:scale-95"
                           >
                             <ChevronRight className="h-4 w-4" />
                           </button>
                         </div>
 
-                        <button
-                          id="jump-to-today-button"
-                          type="button"
-                          onClick={handleJumpToToday}
-                          className="font-label-sm text-xs px-2.5 py-1 rounded-md bg-surface-container-low text-secondary hover:text-primary transition-colors font-semibold cursor-pointer"
-                        >
-                          Today
-                        </button>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            id="jump-to-today-button"
+                            type="button"
+                            onClick={handleJumpToToday}
+                            className="font-label-sm text-xs px-2.5 py-1 rounded-md bg-surface-container-low text-secondary hover:text-primary transition-colors font-semibold cursor-pointer border border-primary-container/10"
+                          >
+                            Today
+                          </button>
+                        </div>
                       </div>
 
                       {/* Day of Week Headers */}
@@ -679,21 +848,21 @@ export default function EventWizardPage() {
                             onClick={() => handleDateChange(day.dateStr)}
                             className={`h-7 rounded-md font-body-sm text-xs flex items-center justify-center transition-all ${
                               day.isDisabled
-                                ? "opacity-25 cursor-not-allowed text-outline"
+                                ? "opacity-30 cursor-not-allowed text-outline line-through"
                                 : day.isSelected
-                                ? "bg-primary-container text-surface-container-lowest font-bold shadow-xs cursor-pointer"
+                                ? "bg-primary-container text-surface-container-lowest font-bold shadow-md cursor-pointer scale-105"
                                 : day.isToday
-                                ? "ring-1 ring-secondary text-secondary font-bold hover:bg-surface-container cursor-pointer"
+                                ? "ring-2 ring-secondary text-secondary font-bold hover:bg-surface-container cursor-pointer"
                                 : day.isCurrentMonth
-                                ? "text-primary hover:bg-surface-container cursor-pointer"
-                                : "text-outline hover:bg-surface-container cursor-pointer"
+                                ? "text-primary hover:bg-surface-container cursor-pointer font-medium"
+                                : "text-on-surface-variant/70 hover:bg-surface-container cursor-pointer font-medium"
                             }`}
                             title={
                               day.isDisabled
                                 ? "Past date disabled"
                                 : day.isToday
                                 ? "Today"
-                                : day.dateStr
+                                : formatDateDisplay(day.dateStr)
                             }
                           >
                             {day.dayNumber}
