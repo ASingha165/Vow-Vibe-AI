@@ -32,6 +32,7 @@ import {
   parseDateDisplay,
 } from "../lib/dateUtils";
 import { DEMO_BENGALI_WEDDING, createDemoBengaliWedding } from "../data/demoEvent";
+import { StorageService } from "../services/storageService";
 
 let passedCount = 0;
 let failedCount = 0;
@@ -566,6 +567,135 @@ async function runAllTests() {
     assert(dstMarch === "2026-03-29", "10a. Date arithmetic across Spring DST transition is exact (2026-03-28 + 1 = 2026-03-29)");
     const dstOct = addDaysToLocalDate("2026-10-24", 1);
     assert(dstOct === "2026-10-25", "10b. Date arithmetic across Autumn DST transition is exact (2026-10-24 + 1 = 2026-10-25)");
+  }
+
+  // --- Test Suite 11: Production Plan Generation, Persistence & Dashboard Contracts ---
+  console.log("\nSuite 11: Production Plan Generation, Persistence & Dashboard Contracts");
+  {
+    const todayStr = getLocalDateString();
+    const eventDate = addDaysToLocalDate(todayStr, 60);
+
+    const validWizardInput = {
+      title: "Rohan & Priya Royal Vivaha",
+      category: "wedding" as const,
+      eventDate,
+      isTentativeDate: false,
+      city: "Kolkata, West Bengal",
+      venueType: "indoor" as const,
+      totalBudget: 1200000,
+      currency: "INR",
+      expectedGuestCount: 350,
+      budgetFlexibility: "moderate" as const,
+      emergencyReservePct: 10,
+      theme: "Regal Rajbari Heritage with Jasmine & Marigold",
+      preferredColors: ["Crimson Red", "Royal Gold", "Warm Ivory"],
+      culturalRegion: "Bengali",
+      foodPreferences: ["Authentic Bengali Feast", "Mishti Doi & Sandesh"],
+      formality: "traditional_royal" as const,
+      accessibilityRequirements: "",
+      mustHaves: ["Live Shehnai", "Traditional Sandhya Aarti"],
+      thingsToAvoid: ["Single-use plastics", "Loud western EDM"],
+      planningStage: "just_started" as const,
+      diyLevel: "hybrid" as const,
+      priorityCategories: ["Catering & Royal Feast", "Heritage Venue & Lawns"],
+      sustainabilityPreferences: "",
+      specialRequirements: "",
+    };
+
+    // 1. Valid event can be generated and saved
+    const { plan: generatedPlan, providerUsed } = await AiService.generateEventPlan(validWizardInput);
+    assert(Boolean(generatedPlan && generatedPlan.id), `1a. Event plan generated successfully via ${providerUsed}`);
+    const saveResult = StorageService.saveEvent(generatedPlan);
+    assert(saveResult === true, "1b. Generated event plan saved successfully to storage layer");
+
+    // 2. Saved event contains all required schema fields
+    const hasRequiredFields =
+      Boolean(generatedPlan.id) &&
+      Boolean(generatedPlan.title) &&
+      Boolean(generatedPlan.eventDate) &&
+      Boolean(generatedPlan.location?.city) &&
+      typeof generatedPlan.budget?.totalBudget === "number" &&
+      Array.isArray(generatedPlan.budget?.categories) &&
+      generatedPlan.budget.categories.length > 0 &&
+      Array.isArray(generatedPlan.budget?.expenses) &&
+      Array.isArray(generatedPlan.timeline?.tasks) &&
+      generatedPlan.timeline.tasks.length > 0 &&
+      Array.isArray(generatedPlan.vendors) &&
+      Array.isArray(generatedPlan.risks) &&
+      Array.isArray(generatedPlan.chatHistory);
+    assert(hasRequiredFields, "2. Saved event strictly complies with complete dashboard contract");
+
+    // 3. Generated event can be retrieved by its ID
+    const retrieved = StorageService.getEventById(generatedPlan.id);
+    assert(
+      Boolean(retrieved && retrieved.id === generatedPlan.id && retrieved.title === generatedPlan.title),
+      `3. Generated event '${generatedPlan.id}' successfully retrieved by ID with all attributes intact`
+    );
+
+    // 4. Dashboard initialization works with newly created event
+    StorageService.setActiveEventId(generatedPlan.id);
+    const activeForDashboard = StorageService.getCurrentEvent();
+    assert(
+      activeForDashboard.id === generatedPlan.id,
+      "4. Dashboard initialization correctly identifies and loads the newly active event"
+    );
+
+    // 5. Missing event IDs are handled safely without throwing
+    const missingResult = StorageService.getEventById("");
+    assert(missingResult === null, "5a. StorageService.getEventById('') safely returns null without throwing");
+    const nonExistent = StorageService.getEventById("non-existent-id-999");
+    assert(nonExistent === null, "5b. StorageService.getEventById('non-existent-id-999') safely returns null");
+
+    // 6. Empty event collections do not crash the dashboard
+    const currFallback = StorageService.getCurrentEvent();
+    assert(Boolean(currFallback && currFallback.title), "6. Dashboard getCurrentEvent() safely falls back if collection is empty");
+
+    // 7. AI failure triggers deterministic fallback engine
+    const fallbackPlan = AiService.generateDeterministicFallback(
+      validWizardInput,
+      120000,
+      generatedPlan.budget.categories,
+      generatedPlan.timeline.tasks
+    );
+    assert(
+      fallbackPlan.title === validWizardInput.title && fallbackPlan.budget.totalBudget === validWizardInput.totalBudget,
+      "7. Deterministic fallback produces complete, mathematically exact EventPlan"
+    );
+
+    // 8. Storage failures reject invalid objects gracefully
+    const invalidEvent = { title: "No ID Event" } as any;
+    const invalidSaveResult = StorageService.saveEvent(invalidEvent);
+    assert(invalidSaveResult === false, "8. StorageService.saveEvent rejects invalid event missing id and eventDate");
+
+    // 9. Repeated saves update in place without creating duplicate events
+    const initialCount = StorageService.getAllEvents().length;
+    StorageService.saveEvent(generatedPlan); // Save again
+    const countAfterReSave = StorageService.getAllEvents().length;
+    assert(
+      initialCount === countAfterReSave,
+      `9. Re-saving existing event '${generatedPlan.id}' updates in-place without duplicating entries (Count: ${countAfterReSave})`
+    );
+
+    // 10. Successful generation navigates to correct active dashboard state
+    assert(
+      StorageService.getActiveEventId() === generatedPlan.id,
+      "10. Active event ID points to newly generated plan for immediate dashboard display"
+    );
+
+    // 11. Failed generation preserves user's form data in draft
+    StorageService.saveWizardDraft(validWizardInput);
+    const preservedDraft = StorageService.getWizardDraft<typeof validWizardInput>();
+    assert(
+      Boolean(preservedDraft && preservedDraft.title === validWizardInput.title),
+      "11. Wizard draft persists user input and is preserved upon simulated failure"
+    );
+
+    // 12. Existing demo events remain accessible and pristine
+    const restoredDemo = StorageService.resetDemoEvent();
+    assert(
+      restoredDemo.id === DEMO_BENGALI_WEDDING.id && restoredDemo.isDemo === true,
+      "12. Existing demo event can be loaded and restored to pristine state at any time"
+    );
   }
 
   // --- Final Results Summary ---

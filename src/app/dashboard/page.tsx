@@ -50,6 +50,7 @@ export default function DashboardPage() {
 function DashboardContent() {
   const router = useRouter();
   const { toast } = useToast();
+  const todayStr = useMidnightRefresh();
 
   const [event, setEvent] = React.useState<EventPlan | null>(null);
   const [activeTab, setActiveTab] = React.useState<TabId>("overview");
@@ -57,8 +58,14 @@ function DashboardContent() {
 
   React.useEffect(() => {
     setIsClient(true);
-    const curr = StorageService.getCurrentEvent();
-    setEvent(curr);
+    try {
+      const curr = StorageService.getCurrentEvent();
+      setEvent(curr);
+    } catch (err) {
+      console.error("Dashboard failed to retrieve current event:", err);
+      const fallback = StorageService.resetDemoEvent();
+      setEvent(fallback);
+    }
   }, []);
 
   const handleUpdateEvent = (updated: EventPlan) => {
@@ -77,7 +84,6 @@ function DashboardContent() {
     );
   }
 
-  const todayStr = useMidnightRefresh();
   const countdown = getDaysRemaining(event.eventDate, todayStr);
 
   const TABS = [

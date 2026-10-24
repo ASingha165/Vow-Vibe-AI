@@ -489,7 +489,20 @@ export default function EventWizardPage() {
 
   // Submit and Generate Plan via API
   const handleGeneratePlan = async () => {
-    // Validate date again before final plan synthesis
+    // Prevent duplicate submissions while generation is in progress
+    if (isGenerating) return;
+
+    // Validate Step 1: Basics
+    if (!formData.title.trim()) {
+      setStep(1);
+      toast({ type: "error", title: "Event Name Required", message: "Please name your celebration before generating plan." });
+      return;
+    }
+    if (!formData.city.trim()) {
+      setStep(1);
+      toast({ type: "error", title: "City Required", message: "Please enter your event city or hub location." });
+      return;
+    }
     if (!formData.isTentativeDate) {
       if (!formData.eventDate || !formData.eventDate.trim()) {
         setStep(1);
@@ -503,6 +516,25 @@ export default function EventWizardPage() {
         toast({ type: "error", title: "Invalid Date", message: "Event date cannot be in the past. Please choose today or a future date." });
         return;
       }
+    }
+
+    // Validate Step 2: Budget & Guests
+    if (formData.totalBudget < 5000) {
+      setStep(2);
+      toast({ type: "error", title: "Invalid Budget", message: "Budget must be at least ₹5,000." });
+      return;
+    }
+    if (formData.expectedGuestCount < 5) {
+      setStep(2);
+      toast({ type: "error", title: "Guest Count", message: "Must have at least 5 guests." });
+      return;
+    }
+
+    // Validate Step 3: Theme
+    if (!formData.theme.trim()) {
+      setStep(3);
+      toast({ type: "error", title: "Theme Required", message: "Please describe your celebration theme." });
+      return;
     }
 
     setIsGenerating(true);
@@ -526,8 +558,18 @@ export default function EventWizardPage() {
         throw new Error(data.error || "Failed to generate plan");
       }
 
-      // Save generated plan to persistence layer
-      StorageService.saveEvent(data.plan);
+      // Confirm generated plan adheres to contract with valid identifier and date
+      if (!data.plan.id || typeof data.plan.id !== "string" || !data.plan.eventDate) {
+        throw new Error("Plan was generated without a valid identifier or date.");
+      }
+
+      // Save generated plan to persistence layer and confirm success
+      const saveSuccess = StorageService.saveEvent(data.plan);
+      if (!saveSuccess) {
+        throw new Error("Unable to save event to browser storage. Please check storage permissions.");
+      }
+
+      // Only clear draft after verified persistence
       StorageService.clearWizardDraft();
 
       toast({
@@ -544,6 +586,7 @@ export default function EventWizardPage() {
         title: "Synthesis Error",
         message: err.message || "Failed to generate plan. Please try again.",
       });
+    } finally {
       setIsGenerating(false);
     }
   };
